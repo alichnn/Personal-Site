@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alice Chen</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: #1a1a1a;
+      line-height: 1.5;
+    }
+
+    section {
+      min-height: 100vh;
+      padding: 5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    h2 {
+      font-size: 2.25rem;
+      margin-bottom: 2.5rem;
+    }
+
+    p {
+      font-size: 1.15rem;
+      max-width: 640px;
+    }
+
+    /* --- Section 1: Air / Intro --- */
+    #intro {
+      background: #0b0e1a;
+      color: #f5f5fa;
+    }
+
+    #intro .tagline {
+      font-size: 1.4rem;
+      max-width: 600px;
+      margin-bottom: 3rem;
+      color: #cfd3e6;
+    }
+
+    .cloud-grid {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .cloud {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 999px;
+      padding: 1.5rem 2.5rem;
+      font-size: 1.1rem;
+      min-width: 160px;
+    }
+
+    /* --- Section: Goal (starry sky) --- */
+    #goal {
+      background-color: #000;
+      background-image:
+        radial-gradient(1.5px 1.5px at 10% 20%, #fff, transparent),
+        radial-gradient(1.5px 1.5px at 22% 65%, #fff, transparent),
+        radial-gradient(1px 1px at 34% 12%, #fff, transparent),
+        radial-gradient(2px 2px at 45% 80%, #fff, transparent),
+        radial-gradient(1px 1px at 58% 35%, #fff, transparent),
+        radial-gradient(1.5px 1.5px at 67% 58%, #fff, transparent),
+        radial-gradient(1px 1px at 75% 15%, #fff, transparent),
+        radial-gradient(2px 2px at 83% 70%, #fff, transparent),
+        radial-gradient(1.5px 1.5px at 90% 40%, #fff, transparent),
+        radial-gradient(1px 1px at 5% 85%, #fff, transparent),
+        radial-gradient(1.5px 1.5px at 15% 45%, #fff, transparent),
+        radial-gradient(1px 1px at 28% 90%, #fff, transparent),
+        radial-gradient(2px 2px at 38% 30%, #fff, transparent),
+        radial-gradient(1px 1px at 50% 10%, #fff, transparent),
+        radial-gradient(1.5px 1.5px at 62% 88%, #fff, transparent),
+        radial-gradient(1px 1px at 70% 48%, #fff, transparent),
+        radial-gradient(2px 2px at 80% 25%, #fff, transparent),
+        radial-gradient(1.5px 1.5px at 88% 92%, #fff, transparent),
+        radial-gradient(1px 1px at 95% 60%, #fff, transparent),
+        radial-gradient(1.5px 1.5px at 3% 55%, #fff, transparent);
+    }
+
+    #goal p {
+      color: #ffffff;
+      font-size: 1.6rem;
+      max-width: 560px;
+    }
+
+    /* --- Section 2: Land / Earth / Work --- */
+    #work {
+      background: #f0ede4;
+      color: #2c2416;
+    }
+
+    .work-list {
+      list-style: none;
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 3rem;
+    }
+
+    .work-list li {
+      background: #ddd6c3;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+
+    .passion-list {
+      list-style: decimal;
+      text-align: left;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .passion-list li {
+      margin-bottom: 0.5rem;
+    }
+
+    /* --- Section 3: Water / About --- */
+    #about {
+      background: #113a5c;
+      color: #eaf3fb;
+    }
+
+    .about-facts {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      font-size: 1.15rem;
+    }
+
+    .about-facts strong {
+      color: #9fd0f0;
+    }
+
+    /* --- Section 4: Fire / Hobbies --- */
+    #hobbies {
+      background: #3a1409;
+      color: #fdece0;
+    }
+
+    .hobby-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(160px, 220px));
+      gap: 1.5rem;
+    }
+
+    .hobby-card {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 150, 90, 0.35);
+      border-radius: 12px;
+      padding: 2rem 1rem;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    @media (max-width: 500px) {
+      h1 { font-size: 2.25rem; }
+      h2 { font-size: 1.75rem; }
+      .hobby-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <section id="intro">
+    <h1>Hey, I'm Alice.</h1>
+    <p class="tagline">I spend most of my time thinking about people.</p>
+    <div class="cloud-grid">
+      <div class="cloud">Relationships</div>
+      <div class="cloud">Dynamics</div>
+      <div class="cloud">Impact</div>
+    </div>
+  </section>
+
+  <section id="goal">
+    <p>A life-long goal of mine is to make meaningful connections</p>
+  </section>
+
+  <section id="work">
+    <h2>Work</h2>
+    <ul class="work-list">
+      <li>Fraud Mitigation</li>
+      <li>Product Strategy</li>
+      <li>Risk</li>
+    </ul>
+    <p>Under all of it, what I'm really passionate about is human intention and desire:</p>
+    <ol class="passion-list">
+      <li>Learning about human behaviour</li>
+      <li>Formulating a path</li>
+      <li>Catering to the subconscious</li>
+    </ol>
+  </section>
+
+  <section id="about">
+    <h2>About Me</h2>
+    <div class="about-facts">
+      <p><strong>Education:</strong> Math / BBA at UW / WLU</p>
+      <p><strong>From:</strong> Markham, Ontario</p>
+      <p><strong>Favorite place:</strong> Downtown Markham</p>
+    </div>
+  </section>
+
+  <section id="hobbies">
+    <h2>Hobbies</h2>
+    <div class="hobby-grid">
+      <div class="hobby-card">Gym</div>
+      <div class="hobby-card">Travel</div>
+      <div class="hobby-card">Food</div>
+      <div class="hobby-card">Friends</div>
+    </div>
+  </section>
+
+</body>
+</html>
