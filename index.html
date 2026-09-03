@@ -90,6 +90,9 @@
       position: absolute;
       inset: 0;
       background: linear-gradient(180deg, #4a8fd6 0%, #7db8ea 35%, #bcdcf5 70%, #eaf5fc 100%);
+      background-image: url("images/hero-sky.jpg");
+      background-size: cover;
+      background-position: center;
     }
 
     .sky-vignette {
@@ -138,15 +141,22 @@
       position: absolute;
       inset: 0;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       justify-content: center;
-      align-items: flex-start;
-      text-align: left;
-      gap: 1.5rem;
-      padding-left: 8vw;
+      align-items: center;
+      gap: 5rem;
+      padding: 0 8vw;
       opacity: calc(1 - var(--hero-fade));
       transform: translateY(calc(var(--hero-fade) * -90px));
       filter: blur(calc(var(--hero-fade) * 8px));
+    }
+
+    .hero-copy {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: left;
+      gap: 1.5rem;
     }
 
     .hero-text h1 {
@@ -154,6 +164,23 @@
       text-shadow: 0 2px 18px rgba(20, 50, 90, 0.35);
       margin: 0;
       font-size: 5rem;
+    }
+
+    .hero-photo {
+      flex-shrink: 0;
+      width: clamp(140px, 16vw, 220px);
+      aspect-ratio: 2 / 3;
+      padding: 6px;
+      border: 2px solid rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 24px rgba(20, 50, 90, 0.25);
+    }
+
+    .hero-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
     .fog-text {
@@ -239,32 +266,192 @@
     #goal {
       background-color: #000;
       background-image:
-        radial-gradient(1.5px 1.5px at 10% 20%, #fff, transparent),
-        radial-gradient(1.5px 1.5px at 22% 65%, #fff, transparent),
-        radial-gradient(1px 1px at 34% 12%, #fff, transparent),
-        radial-gradient(2px 2px at 45% 80%, #fff, transparent),
-        radial-gradient(1px 1px at 58% 35%, #fff, transparent),
-        radial-gradient(1.5px 1.5px at 67% 58%, #fff, transparent),
-        radial-gradient(1px 1px at 75% 15%, #fff, transparent),
-        radial-gradient(2px 2px at 83% 70%, #fff, transparent),
-        radial-gradient(1.5px 1.5px at 90% 40%, #fff, transparent),
-        radial-gradient(1px 1px at 5% 85%, #fff, transparent),
-        radial-gradient(1.5px 1.5px at 15% 45%, #fff, transparent),
-        radial-gradient(1px 1px at 28% 90%, #fff, transparent),
-        radial-gradient(2px 2px at 38% 30%, #fff, transparent),
-        radial-gradient(1px 1px at 50% 10%, #fff, transparent),
-        radial-gradient(1.5px 1.5px at 62% 88%, #fff, transparent),
-        radial-gradient(1px 1px at 70% 48%, #fff, transparent),
-        radial-gradient(2px 2px at 80% 25%, #fff, transparent),
-        radial-gradient(1.5px 1.5px at 88% 92%, #fff, transparent),
-        radial-gradient(1px 1px at 95% 60%, #fff, transparent),
-        radial-gradient(1.5px 1.5px at 3% 55%, #fff, transparent);
+        linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.35)),
+        url("images/starry-sky.jpg");
+      background-size: cover;
+      background-position: center;
+      flex-direction: column;
+      gap: 0.75rem;
     }
 
     #goal p {
       color: #ffffff;
       font-size: 1.6rem;
       max-width: 560px;
+      margin: 0;
+    }
+
+    #goal p.indent {
+      align-self: center;
+      margin-left: 2.5rem;
+    }
+
+    /* --- Section 1.5: Land approach (star-zoom -> fields -> tumbleweed road) --- */
+    #land-scene {
+      position: relative;
+      height: 850vh;
+      padding: 0;
+      display: block;
+    }
+
+    .land-sticky {
+      position: sticky;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+      display: block;
+
+      --star-zoom: clamp(0, calc((var(--progress) - 0.04) / 0.18), 1);
+      --star-scale: calc(1 + var(--star-zoom) * 70);
+      --star-fade: clamp(0, calc((var(--progress) - 0.16) / 0.06), 1);
+      --fields-in: clamp(0, calc((var(--progress) - 0.04) / 0.12), 1);
+      --road-in: clamp(0, calc((var(--progress) - 0.34) / 0.12), 1);
+
+      --tw1-roll: clamp(0, calc((var(--progress) - 0.52) / 0.14), 1);
+      --tw1-rise: clamp(0, calc((var(--progress) - 0.56) / 0.03), 1);
+      --tw1-fall: clamp(0, calc((0.65 - var(--progress)) / 0.03), 1);
+      --tw1-text: min(var(--tw1-rise), var(--tw1-fall));
+
+      --tw2-roll: clamp(0, calc((var(--progress) - 0.66) / 0.14), 1);
+      --tw2-rise: clamp(0, calc((var(--progress) - 0.70) / 0.03), 1);
+      --tw2-fall: clamp(0, calc((0.79 - var(--progress)) / 0.03), 1);
+      --tw2-text: min(var(--tw2-rise), var(--tw2-fall));
+
+      --tw3-roll: clamp(0, calc((var(--progress) - 0.80) / 0.14), 1);
+      --tw3-rise: clamp(0, calc((var(--progress) - 0.84) / 0.03), 1);
+      --tw3-fall: clamp(0, calc((0.93 - var(--progress)) / 0.03), 1);
+      --tw3-text: min(var(--tw3-rise), var(--tw3-fall));
+
+      --dark: clamp(0, calc((var(--progress) - 0.94) / 0.06), 1);
+    }
+
+    .star-bg,
+    .fields-bg,
+    .road-bg {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .star-bg {
+      background-image: url("images/starry-sky.jpg");
+      z-index: 0;
+    }
+
+    .fields-bg {
+      background-image: url("images/fields-aerial.jpg");
+      opacity: var(--fields-in);
+      z-index: 1;
+    }
+
+    .road-bg {
+      background-image: url("images/tumbleweed-road.jpg");
+      opacity: var(--road-in);
+      z-index: 2;
+    }
+
+    .star-dot {
+      position: absolute;
+      top: 36%;
+      left: 54%;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #fffef0 0%, #ffe9a8 55%, rgba(255, 233, 168, 0) 75%);
+      box-shadow: 0 0 24px 8px rgba(255, 245, 210, 0.85);
+      transform: translate(-50%, -50%) scale(var(--star-scale));
+      opacity: calc(1 - var(--star-fade));
+      z-index: 3;
+    }
+
+    .tw-track {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    .tw-ball {
+      position: absolute;
+      bottom: 16%;
+      left: 0;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: repeating-conic-gradient(from 0deg, rgba(120, 85, 40, 0.95) 0deg 10deg, rgba(178, 140, 80, 0.95) 10deg 20deg);
+      box-shadow:
+        inset -8px -8px 14px rgba(40, 25, 10, 0.5),
+        inset 6px 6px 10px rgba(255, 240, 210, 0.35),
+        0 8px 14px rgba(0, 0, 0, 0.35);
+    }
+
+    .tw-ball-1 { transform: translateX(calc(var(--tw1-roll) * 130vw - 10vw)) rotate(calc(var(--tw1-roll) * 900deg)); }
+    .tw-ball-2 { transform: translateX(calc(var(--tw2-roll) * 130vw - 10vw)) rotate(calc(var(--tw2-roll) * 900deg)); }
+    .tw-ball-3 { transform: translateX(calc(var(--tw3-roll) * 130vw - 10vw)) rotate(calc(var(--tw3-roll) * 900deg)); }
+
+    .tw-captions {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .tw-caption {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0 2rem;
+    }
+
+    .tw-caption[data-order="0"] {
+      opacity: var(--tw1-text);
+      filter: blur(calc((1 - var(--tw1-text)) * 14px));
+      transform: translateY(calc((1 - var(--tw1-text)) * 14px));
+    }
+
+    .tw-caption[data-order="1"] {
+      opacity: var(--tw2-text);
+      filter: blur(calc((1 - var(--tw2-text)) * 14px));
+      transform: translateY(calc((1 - var(--tw2-text)) * 14px));
+    }
+
+    .tw-caption[data-order="2"] {
+      opacity: var(--tw3-text);
+      filter: blur(calc((1 - var(--tw3-text)) * 14px));
+      transform: translateY(calc((1 - var(--tw3-text)) * 14px));
+    }
+
+    .tw-lead {
+      margin: 0;
+      color: #fff;
+      font-size: 1.1rem;
+      font-style: italic;
+      text-shadow: 0 2px 12px rgba(20, 50, 90, 0.4);
+    }
+
+    .tw-line {
+      margin: 0;
+      max-width: 560px;
+      color: #fff;
+      font-size: clamp(1.3rem, 4vw, 1.8rem);
+      font-weight: 600;
+      text-align: center;
+      text-shadow: 0 2px 16px rgba(20, 50, 90, 0.45);
+    }
+
+    .dark-overlay {
+      position: absolute;
+      inset: 0;
+      background: #000;
+      opacity: calc(var(--dark) * 0.92);
+      pointer-events: none;
+      z-index: 6;
     }
 
     /* --- Section 2: Land / Earth / Work --- */
@@ -341,8 +528,9 @@
     @media (max-width: 500px) {
       h1 { font-size: 2.25rem; }
       h2 { font-size: 1.75rem; }
-      .hero-text h1 { font-size: 2.75rem; }
-      .hero-text { padding-left: 6vw; gap: 1rem; }
+      .hero-text h1 { font-size: 2.5rem; }
+      .hero-text { padding: 0 6vw; gap: 1.5rem; }
+      .hero-photo { width: 30vw; }
       .hobby-grid { grid-template-columns: 1fr; }
     }
   </style>
@@ -363,8 +551,13 @@
       </div>
 
       <div class="hero-text">
-        <h1>Hey</h1>
-        <h1>I'm Alice</h1>
+        <div class="hero-copy">
+          <h1>Hey</h1>
+          <h1>I'm Alice</h1>
+        </div>
+        <div class="hero-photo">
+          <img src="images/main_pic.JPG" alt="Alice">
+        </div>
       </div>
 
       <div class="fog-glow"></div>
@@ -373,15 +566,48 @@
       </div>
 
       <div class="mist-words">
-        <span class="mist-word" data-order="0">Relationships</span>
-        <span class="mist-word" data-order="1">Dynamics</span>
-        <span class="mist-word" data-order="2">Impact</span>
+        <span class="mist-word" data-order="0">my Relationships</span>
+        <span class="mist-word" data-order="1">their Dynamics</span>
+        <span class="mist-word" data-order="2">and Impact</span>
       </div>
     </div>
   </section>
 
   <section id="goal">
-    <p>A life-long goal of mine is to make meaningful connections</p>
+    <p>A life-long goal</p>
+    <p class="indent">is to make meaningful connections</p>
+  </section>
+
+  <section id="land-scene">
+    <div class="land-sticky">
+      <div class="star-bg"></div>
+      <div class="fields-bg"></div>
+      <div class="road-bg"></div>
+      <div class="star-dot"></div>
+
+      <div class="tw-track">
+        <div class="tw-ball tw-ball-1"></div>
+        <div class="tw-ball tw-ball-2"></div>
+        <div class="tw-ball tw-ball-3"></div>
+      </div>
+
+      <div class="tw-captions">
+        <div class="tw-caption" data-order="0">
+          <p class="tw-lead">I want to</p>
+          <p class="tw-line">learn about human behaviour</p>
+        </div>
+        <div class="tw-caption" data-order="1">
+          <p class="tw-lead">I want to</p>
+          <p class="tw-line">strategize a mathematical formula</p>
+        </div>
+        <div class="tw-caption" data-order="2">
+          <p class="tw-lead">I want to</p>
+          <p class="tw-line">cater to the subconscious</p>
+        </div>
+      </div>
+
+      <div class="dark-overlay"></div>
+    </div>
   </section>
 
   <section id="work">
@@ -419,15 +645,19 @@
   </section>
 
   <script>
-    const skyScene = document.getElementById('sky-scene');
-    const skySticky = document.querySelector('.sky-sticky');
+    const pinnedScenes = [
+      { scene: document.getElementById('sky-scene'), sticky: document.querySelector('.sky-sticky') },
+      { scene: document.getElementById('land-scene'), sticky: document.querySelector('.land-sticky') },
+    ];
     let ticking = false;
 
     function updateProgress() {
-      const rect = skyScene.getBoundingClientRect();
-      const scrollable = skyScene.offsetHeight - window.innerHeight;
-      const progress = scrollable > 0 ? -rect.top / scrollable : 0;
-      skySticky.style.setProperty('--progress', Math.min(1, Math.max(0, progress)));
+      pinnedScenes.forEach(({ scene, sticky }) => {
+        const rect = scene.getBoundingClientRect();
+        const scrollable = scene.offsetHeight - window.innerHeight;
+        const progress = scrollable > 0 ? -rect.top / scrollable : 0;
+        sticky.style.setProperty('--progress', Math.min(1, Math.max(0, progress)));
+      });
       ticking = false;
     }
 
