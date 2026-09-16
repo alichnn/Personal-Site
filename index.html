@@ -343,11 +343,12 @@
     const cloudTexLoader = new THREE.TextureLoader();
     const cloudTex = cloudTexLoader.load('images/cloud-sky-render.png');
     cloudTex.wrapS = cloudTex.wrapT = THREE.MirroredRepeatWrapping;
+    const CLOUD_DISTANCE = 22;
     const cloudSky = new THREE.Mesh(
       new THREE.PlaneGeometry(100, 56),
-      new THREE.MeshBasicMaterial({ map: cloudTex, transparent: true, opacity: 1, fog: true })
+      new THREE.MeshBasicMaterial({ map: cloudTex, transparent: true, opacity: 1, fog: false })
     );
-    cloudSky.position.set(0, 2, -25);
+    cloudSky.position.set(0, 2, -CLOUD_DISTANCE);
     scene.add(cloudSky);
 
     // ---------- soft glow texture (clouds / star / embers) ----------
@@ -518,7 +519,7 @@
       // left-to-right as the user scrolls, holds through the fog / mist-word
       // sections, fades out right as "a life-long goal" appears
       cloudTex.offset.x = -progress * 1.4;
-      cloudSky.position.copy(camPos).addScaledVector(tmpForward, 40);
+      cloudSky.position.copy(camPos).addScaledVector(tmpForward, CLOUD_DISTANCE);
       cloudSky.quaternion.copy(camera.quaternion);
       cloudSky.material.opacity = 1 - ramp(progress, ...T.cloudFade);
       cloudSky.visible = cloudSky.material.opacity > 0.001;
