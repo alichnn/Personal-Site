@@ -340,6 +340,17 @@
     const particles = new THREE.Points(particleGeo, particleMat);
     scene.add(particles);
 
+    // ---------- opening cloud sky (fades out as hero copy fades) ----------
+    const cloudTexLoader = new THREE.TextureLoader();
+    const cloudTex = cloudTexLoader.load('images/cloud-sky-render.png');
+    cloudTex.wrapS = cloudTex.wrapT = THREE.MirroredRepeatWrapping;
+    const cloudSky = new THREE.Mesh(
+      new THREE.PlaneGeometry(100, 56),
+      new THREE.MeshBasicMaterial({ map: cloudTex, transparent: true, opacity: 1, fog: true })
+    );
+    cloudSky.position.set(0, 2, -25);
+    scene.add(cloudSky);
+
     // ---------- soft glow texture (clouds / star / embers) ----------
     function makeGlowTexture() {
       const size = 128;
@@ -488,6 +499,11 @@
     const clock = new THREE.Clock();
 
     function updateScene(progress) {
+      // opening cloud sky: pans left-to-right as the user scrolls, fades out with the hero copy
+      cloudTex.offset.x = -progress * 1.4;
+      cloudSky.material.opacity = 1 - ramp(progress, ...T.heroFade);
+      cloudSky.visible = cloudSky.material.opacity > 0.001;
+
       // camera along path
       const camPos = path.getPointAt(progress);
       camera.position.copy(camPos);
