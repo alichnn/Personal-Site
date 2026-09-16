@@ -284,8 +284,7 @@
     // ---------- zone color ramp ----------
     const zoneStops = [
       { t: 0.00, color: new THREE.Color('#4a8fd6') },
-      { t: 0.40, color: new THREE.Color('#3f6fa8') },
-      { t: 0.50, color: new THREE.Color('#0b0e1a') },
+      { t: 0.44, color: new THREE.Color('#4a8fd6') },
       { t: 0.58, color: new THREE.Color('#fdf1c8') },
       { t: 0.66, color: new THREE.Color('#caa46a') },
       { t: 0.85, color: new THREE.Color('#b98a4a') },
@@ -334,13 +333,13 @@
     particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     particleGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     const particleMat = new THREE.PointsMaterial({
-      size: 0.32, vertexColors: true, transparent: true, opacity: 0.85,
+      size: 0.32, vertexColors: true, transparent: true, opacity: 0,
       blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
     });
     const particles = new THREE.Points(particleGeo, particleMat);
     scene.add(particles);
 
-    // ---------- opening cloud sky (fades out as hero copy fades) ----------
+    // ---------- opening cloud sky (holds through fog/mist-words, fades out at goal) ----------
     const cloudTexLoader = new THREE.TextureLoader();
     const cloudTex = cloudTexLoader.load('images/cloud-sky-render.png');
     cloudTex.wrapS = cloudTex.wrapT = THREE.MirroredRepeatWrapping;
@@ -467,6 +466,8 @@
     // ---------- timeline breakpoints (fractions of total scroll) ----------
     const T = {
       heroFade: [0.03, 0.07],
+      cloudFade: [0.40, 0.44],
+      particlesIn: [0.40, 0.46],
       fog: [0.07, 0.10, 0.14, 0.17],
       word1: [0.17, 0.20, 0.23, 0.26],
       word2: [0.26, 0.29, 0.32, 0.35],
@@ -499,10 +500,8 @@
     const clock = new THREE.Clock();
 
     function updateScene(progress) {
-      // opening cloud sky: pans left-to-right as the user scrolls, fades out with the hero copy
-      cloudTex.offset.x = -progress * 1.4;
-      cloudSky.material.opacity = 1 - ramp(progress, ...T.heroFade);
-      cloudSky.visible = cloudSky.material.opacity > 0.001;
+      // ambient particle field takes over from the cloud sky at the goal handoff
+      particleMat.opacity = 0.85 * ramp(progress, ...T.particlesIn);
 
       // camera along path
       const camPos = path.getPointAt(progress);
@@ -514,6 +513,15 @@
       tmpForward.copy(lookTarget).sub(camPos).normalize();
       tmpRight.crossVectors(tmpForward, worldUp).normalize();
       tmpUp.crossVectors(tmpRight, tmpForward).normalize();
+
+      // opening cloud sky: rides ahead of the camera so it stays in view, pans
+      // left-to-right as the user scrolls, holds through the fog / mist-word
+      // sections, fades out right as "a life-long goal" appears
+      cloudTex.offset.x = -progress * 1.4;
+      cloudSky.position.copy(camPos).addScaledVector(tmpForward, 40);
+      cloudSky.quaternion.copy(camera.quaternion);
+      cloudSky.material.opacity = 1 - ramp(progress, ...T.cloudFade);
+      cloudSky.visible = cloudSky.material.opacity > 0.001;
 
       // atmosphere color
       const zc = zoneColorAt(progress);
