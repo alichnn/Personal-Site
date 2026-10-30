@@ -5,13 +5,31 @@
 <script setup>
 import * as THREE from 'three'
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { useScrollProgress } from '../composables/useScrollProgress'
 import { buildCameraPath } from '../utils/cameraPath'
 import { ramp } from '../utils/easing'
+import { buildAir, updateAir } from '../scenes/air'
+import { T } from '../utils/timeline'
 
 const props = defineProps({
   progress: { type: Number, required: true },
 })
+
+// ---------- atmosphere color ramp ----------
+const zoneStops = [
+  { t: 0.00, color: new THREE.Color('#4a8fd6') },
+  { t: 0.14, color: new THREE.Color('#4a8fd6') },
+  { t: 0.24, color: new THREE.Color('#080b16') },
+]
+function zoneColorAt(t) {
+  for (let i = 0; i < zoneStops.length - 1; i++) {
+    const a = zoneStops[i], b = zoneStops[i + 1]
+    if (t >= a.t && t <= b.t) {
+      const local = (t - a.t) / (b.t - a.t || 1)
+      return a.color.clone().lerp(b.color, local)
+    }
+  }
+  return zoneStops[zoneStops.length - 1].color.clone()
+}
 
 const canvasEl = ref(null)
 let renderer, scene, camera, rafId
@@ -27,17 +45,20 @@ onMounted(() => {
   camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.1, 400)
 
   const path = buildCameraPath()
+  const camPos = new THREE.Vector3()
   const lookTarget = new THREE.Vector3()
+  const tmpForward = new THREE.Vector3()
 
-  // placeholder atmosphere: blue -> dark -> blue, to prove the pipeline end to end
-  // before the real scene modules land in the next phase
-  const skyBlue = new THREE.Color('#4a8fd6')
-  const night = new THREE.Color('#0a0e1a')
-  scene.background = skyBlue.clone()
+  scene.background = new THREE.Color('#4a8fd6')
   scene.fog = new THREE.FogExp2('#4a8fd6', 0.018)
 
   const ambient = new THREE.AmbientLight('#ffffff', 0.8)
   scene.add(ambient)
+  const keyLight = new THREE.PointLight('#ffffff', 1.1, 120)
+  scene.add(keyLight)
+
+  const air = buildAir(scene)
+  const clock = new THREE.Clock()
 
   resizeHandler = () => {
     camera.aspect = window.innerWidth / window.innerHeight
@@ -48,17 +69,21 @@ onMounted(() => {
 
   function frame() {
     const p = props.progress
+    const elapsed = clock.getElapsedTime()
 
-    const camPos = path.getPointAt(p)
+    camPos.copy(path.getPointAt(p))
     camera.position.copy(camPos)
     const aheadT = Math.min(1, p + 0.015)
     lookTarget.copy(path.getPointAt(aheadT))
     camera.lookAt(lookTarget)
+    tmpForward.copy(lookTarget).sub(camPos).normalize()
 
-    const nightV = ramp(p, 0.10, 0.18)
-    const c = skyBlue.clone().lerp(night, nightV)
-    scene.background.copy(c)
-    scene.fog.color.copy(c)
+    const zc = zoneColorAt(p)
+    scene.background.copy(zc)
+    scene.fog.color.copy(zc)
+    keyLight.color.copy(zc).lerp(new THREE.Color('#ffffff'), 0.5)
+
+    updateAir(air, { progress: p, elapsed, camPos, tmpForward, T })
 
     renderer.render(scene, camera)
     rafId = requestAnimationFrame(frame)

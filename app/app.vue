@@ -12,6 +12,15 @@
           <img src="/images/main_pic.JPG" alt="Alice">
         </div>
       </div>
+
+      <div class="layer" id="layer-fog" :style="fogStyle">
+        <p>I spend most of my time thinking about people.</p>
+      </div>
+
+      <div class="layer" id="layer-goal" :style="goalStyle">
+        <p>A life-long goal</p>
+        <p class="indent">is to make meaningful connections</p>
+      </div>
     </div>
 
     <div id="scroll-hint" :style="{ opacity: 1 - ramp(progress, 0, 0.025) }">scroll</div>
@@ -21,11 +30,11 @@
 <script setup>
 import { computed } from 'vue'
 import { useScrollProgress } from './composables/useScrollProgress'
-import { ramp } from './utils/easing'
+import { ramp, bell } from './utils/easing'
+import { T } from './utils/timeline'
 
 const { progress } = useScrollProgress()
 
-const heroFade = [0.03, 0.07]
 function layerStyle(v) {
   return {
     opacity: v,
@@ -34,7 +43,9 @@ function layerStyle(v) {
     pointerEvents: v > 0.6 ? 'auto' : 'none',
   }
 }
-const heroStyle = computed(() => layerStyle(1 - ramp(progress.value, ...heroFade)))
+const heroStyle = computed(() => layerStyle(1 - ramp(progress.value, ...T.heroFade)))
+const fogStyle = computed(() => layerStyle(bell(progress.value, ...T.fog)))
+const goalStyle = computed(() => layerStyle(bell(progress.value, ...T.goal)))
 </script>
 
 <style>
@@ -51,6 +62,12 @@ const heroStyle = computed(() => layerStyle(1 - ramp(progress.value, ...heroFade
   box-shadow: 0 4px 24px rgba(20, 50, 90, 0.25);
 }
 .hero-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+#layer-fog p, #layer-goal p {
+  text-shadow: 0 2px 14px rgba(10, 14, 30, 0.6);
+}
+#layer-goal p.indent { margin-left: 2.5rem; font-size: 1.6rem; }
+#layer-goal p:first-child { font-size: 1.6rem; }
 
 @media (max-width: 640px) {
   .hero-copy h1 { font-size: 2.75rem; }
