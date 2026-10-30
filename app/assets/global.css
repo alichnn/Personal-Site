@@ -1,0 +1,57 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  background: #05070d;
+}
+
+/* the only thing that actually gives the page scroll length */
+body {
+  height: 2600vh;
+  font-family: "Alice", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: #fff;
+}
+
+#overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+  padding: 0 6vw;
+  opacity: 0;
+  will-change: opacity, transform, filter;
+}
+
+h1 { font-size: 3rem; }
+h2 { font-size: 2.25rem; margin-bottom: 1.5rem; }
+p { font-size: 1.15rem; max-width: 640px; }
+
+#scroll-hint {
+  position: fixed;
+  left: 50%;
+  bottom: 6vh;
+  transform: translateX(-50%);
+  z-index: 2;
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+  animation: bob 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes bob {
+  0%, 100% { transform: translate(-50%, 0); opacity: 0.8; }
+  50% { transform: translate(-50%, 10px); opacity: 0.4; }
+}
