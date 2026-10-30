@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { ramp } from '../utils/easing'
+import { ramp, bell } from '../utils/easing'
 
 // A hand-drawn-looking cloud puff, built the same way the glow-sprite
 // texture already is elsewhere in this project: draw it once on a canvas,
@@ -89,8 +89,8 @@ export function updateAir(air, { progress, elapsed, camPos, tmpForward, T }) {
   })
   cloudMat.opacity = 1 - ramp(progress, ...T.cloudClear)
 
-  // stars fade in as the sky darkens, each blinking on its own phase
-  const starV = ramp(progress, ...T.starsIn)
+  // stars fade in as the sky darkens, then back out as Earth's daylight arrives
+  const starV = bell(progress, ...T.starsIn)
   stars.position.copy(camPos)
   starMat.opacity = starV * 0.95
   if (starV > 0.001) {

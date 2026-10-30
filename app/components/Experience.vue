@@ -8,6 +8,7 @@ import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { buildCameraPath } from '../utils/cameraPath'
 import { ramp } from '../utils/easing'
 import { buildAir, updateAir } from '../scenes/air'
+import { buildEarth, updateEarth } from '../scenes/earth'
 import { T } from '../utils/timeline'
 
 const props = defineProps({
@@ -19,6 +20,8 @@ const zoneStops = [
   { t: 0.00, color: new THREE.Color('#4a8fd6') },
   { t: 0.14, color: new THREE.Color('#4a8fd6') },
   { t: 0.24, color: new THREE.Color('#080b16') },
+  { t: 0.34, color: new THREE.Color('#a9ddf0') },
+  { t: 0.58, color: new THREE.Color('#a9ddf0') },
 ]
 function zoneColorAt(t) {
   for (let i = 0; i < zoneStops.length - 1; i++) {
@@ -58,6 +61,7 @@ onMounted(() => {
   scene.add(keyLight)
 
   const air = buildAir(scene)
+  const earth = buildEarth(scene)
   const clock = new THREE.Clock()
 
   resizeHandler = () => {
@@ -84,6 +88,7 @@ onMounted(() => {
     keyLight.color.copy(zc).lerp(new THREE.Color('#ffffff'), 0.5)
 
     updateAir(air, { progress: p, elapsed, camPos, tmpForward, T })
+    updateEarth(earth, { progress: p, elapsed, T })
 
     renderer.render(scene, camera)
     rafId = requestAnimationFrame(frame)

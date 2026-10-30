@@ -21,6 +21,13 @@
         <p>A life-long goal</p>
         <p class="indent">is to make meaningful connections</p>
       </div>
+
+      <div class="layer" id="layer-earth" :style="earthStyle">
+        <p>
+          I want to learn about human behaviour, strategize a mathematical
+          formula, and cater to the subconscious.
+        </p>
+      </div>
     </div>
 
     <div id="scroll-hint" :style="{ opacity: 1 - ramp(progress, 0, 0.025) }">scroll</div>
@@ -46,6 +53,7 @@ function layerStyle(v) {
 const heroStyle = computed(() => layerStyle(1 - ramp(progress.value, ...T.heroFade)))
 const fogStyle = computed(() => layerStyle(bell(progress.value, ...T.fog)))
 const goalStyle = computed(() => layerStyle(bell(progress.value, ...T.goal)))
+const earthStyle = computed(() => layerStyle(bell(progress.value, ...T.earthParagraph)))
 </script>
 
 <style>
@@ -68,6 +76,16 @@ const goalStyle = computed(() => layerStyle(bell(progress.value, ...T.goal)))
 }
 #layer-goal p.indent { margin-left: 2.5rem; font-size: 1.6rem; }
 #layer-goal p:first-child { font-size: 1.6rem; }
+
+#layer-earth p {
+  color: #1d3a1a;
+  text-shadow: none;
+  background: rgba(255, 255, 255, 0.55);
+  padding: 1.5rem 2rem;
+  border-radius: 14px;
+  font-size: 1.3rem;
+  line-height: 1.6;
+}
 
 @media (max-width: 640px) {
   .hero-copy h1 { font-size: 2.75rem; }
