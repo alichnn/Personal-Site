@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { ramp, bell } from '../utils/easing'
+import { makeGlowTexture } from '../utils/glowTexture'
 
 // A hand-drawn-looking cloud puff, built the same way the glow-sprite
 // texture already is elsewhere in this project: draw it once on a canvas,
@@ -65,6 +66,7 @@ export function buildAir(scene) {
   starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3))
   starGeo.setAttribute('color', new THREE.BufferAttribute(starColor, 3))
   const starMat = new THREE.PointsMaterial({
+    map: makeGlowTexture(),
     size: 0.6, vertexColors: true, transparent: true, opacity: 0,
     blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
   })

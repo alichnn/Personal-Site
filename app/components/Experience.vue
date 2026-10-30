@@ -6,9 +6,12 @@
 import * as THREE from 'three'
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { buildCameraPath } from '../utils/cameraPath'
-import { ramp } from '../utils/easing'
+import { ramp, bell } from '../utils/easing'
 import { buildAir, updateAir } from '../scenes/air'
 import { buildEarth, updateEarth } from '../scenes/earth'
+import { buildWater, updateWater } from '../scenes/water'
+import { buildFire, updateFire } from '../scenes/fire'
+import { buildMistFireflies, updateMistFireflies } from '../scenes/mistFireflies'
 import { T } from '../utils/timeline'
 
 const props = defineProps({
@@ -21,7 +24,10 @@ const zoneStops = [
   { t: 0.14, color: new THREE.Color('#4a8fd6') },
   { t: 0.24, color: new THREE.Color('#080b16') },
   { t: 0.34, color: new THREE.Color('#a9ddf0') },
-  { t: 0.58, color: new THREE.Color('#a9ddf0') },
+  { t: 0.62, color: new THREE.Color('#a9ddf0') },
+  { t: 0.80, color: new THREE.Color('#e8b86d') },
+  { t: 0.92, color: new THREE.Color('#3a2438') },
+  { t: 1.00, color: new THREE.Color('#0d0709') },
 ]
 function zoneColorAt(t) {
   for (let i = 0; i < zoneStops.length - 1; i++) {
@@ -62,7 +68,13 @@ onMounted(() => {
 
   const air = buildAir(scene)
   const earth = buildEarth(scene)
+  const water = buildWater(scene)
+  const fire = buildFire(scene)
+  const mist = buildMistFireflies(scene)
   const clock = new THREE.Clock()
+
+  const mistAnchor = water.group.position.clone().add(new THREE.Vector3(0, 0.5, -24))
+  const fireAnchor = fire.anchor
 
   resizeHandler = () => {
     camera.aspect = window.innerWidth / window.innerHeight
@@ -75,9 +87,13 @@ onMounted(() => {
     const p = props.progress
     const elapsed = clock.getElapsedTime()
 
-    camPos.copy(path.getPointAt(p))
+    // clamp below 1 so there's always room for the "ahead" sample to differ
+    // from the camera's own position - at p===aheadT the look direction is
+    // a zero vector and camera.lookAt() degenerates
+    const pathT = Math.min(p, 0.998)
+    camPos.copy(path.getPointAt(pathT))
     camera.position.copy(camPos)
-    const aheadT = Math.min(1, p + 0.015)
+    const aheadT = Math.min(1, pathT + 0.015)
     lookTarget.copy(path.getPointAt(aheadT))
     camera.lookAt(lookTarget)
     tmpForward.copy(lookTarget).sub(camPos).normalize()
@@ -89,6 +105,18 @@ onMounted(() => {
 
     updateAir(air, { progress: p, elapsed, camPos, tmpForward, T })
     updateEarth(earth, { progress: p, elapsed, T })
+    updateWater(water, { progress: p, elapsed, T })
+    updateFire(fire, { progress: p, elapsed, T })
+
+    const mistV = bell(p, ...T.mistOpacity)
+    updateMistFireflies(mist, {
+      elapsed,
+      anchorMist: mistAnchor,
+      anchorFire: fireAnchor,
+      mixT: ramp(p, ...T.mistToFireMix),
+      visible: mistV > 0.001,
+      opacity: mistV * 0.85,
+    })
 
     renderer.render(scene, camera)
     rafId = requestAnimationFrame(frame)
