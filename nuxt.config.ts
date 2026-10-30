@@ -4,7 +4,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   ssr: false,
   app: {
-    baseURL: '/Personal-Site/',
+    baseURL: '/',
     head: {
       title: 'Alice Chen',
       link: [
