@@ -1,75 +1,55 @@
-# Nuxt Minimal Starter
+# alicechen.art: Four Elements
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+A single-page scroll story. The camera flies through one continuous low-poly toon world:
+clouds (air) → night sky → dandelion seeds → meadow (earth) → koi pond (water) → sunset that
+burns into a campfire (fire) → back up to the stars.
 
-## Setup
+Nuxt 4 (client-only, statically generated) · Three.js · anime.js · Lenis.
 
-Make sure to install dependencies:
+## Run
 
 ```bash
-# npm
 npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
+npm run dev        # http://localhost:3000
+npm run generate   # static build in .output/public
+npm run typecheck
 ```
 
-## Development Server
+Pushing to `main` deploys to GitHub Pages via `.github/workflows/deploy.yml`
+(`public/CNAME` keeps the `alicechen.art` domain).
 
-Start the development server on `http://localhost:3000`:
+## Editing content
 
-```bash
-# npm
-npm run dev
+| What | Where |
+| --- | --- |
+| All copy, work roles, contact links | `app/data/content.ts` |
+| Photo albums (name, photos, alt text) | `app/data/albums.ts` |
+| Hero photo | `assets-src/hero/alice.jpg` → `npm run images` |
+| Album photos | `assets-src/albums/<album>/<slug>.jpg` → `npm run images`, then list in `albums.ts` |
 
-# pnpm
-pnpm dev
+`npm run images` writes resized 4:5 AVIF/WebP variants to `public/` and strips EXIF/GPS.
+`assets-src/` (the full-size originals) is gitignored on purpose; only the web variants are committed.
 
-# yarn
-yarn dev
+Adding a fourth work role is a one-line edit in `content.ts`: the pond spawns another lily pad
+and the scroll timeline divides the hold between them.
 
-# bun
-bun run dev
-```
+## Tuning
 
-## Production
+- **Scroll timing:** every progress range is in `app/core/timeline.ts`.
+- **Camera path:** keyframes in `app/core/camera.ts`. Pairs of nearby keys make the plateaus
+  where text holds; the gaps between them are the fast flights.
+- **Light and sky per moment:** keyframes in `app/core/atmosphere.ts`.
+- **World layout** (sign, pond, fire positions): `app/core/layout.ts`.
 
-Build the application for production:
+URL switches for testing: `?quality=high|medium|low` pins the quality tier, and `?reduced` forces
+reduced-motion mode. In dev only, `?msaa=`, `?dpr=`, `?shadows=0|1` and `?bloom=` override
+individual quality settings.
 
-```bash
-# npm
-npm run build
+## How it fits together
 
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+- `app/core/world.ts`: renderer, post-processing (bloom, grade, FXAA), the single render loop,
+  background streaming of later scenes, the quality probe and watchdog, and the reduced-motion crossfade.
+- `app/scenes/*`: one module per part of the world. Each has a progress `range`, a `build()`
+  and an `update()`.
+- `app/components/*`: the HTML layer. All text is real DOM, scrubbed by scroll with anime.js.
+- `app/core/audio.ts`: the ambient soundscape, synthesised with Web Audio (no audio files).

@@ -1,157 +1,139 @@
+<script setup lang="ts">
+import { SCROLL_SVH, T } from '~/core/timeline'
+import { goal, hero, people } from '~/data/content'
+import { ui } from '~/composables/useStory'
+
+// Client-only app: decide reduced motion before the world is created.
+ui.reduced = matchMedia('(prefers-reduced-motion: reduce)').matches || new URLSearchParams(location.search).has('reduced')
+</script>
+
 <template>
-  <div>
-    <Experience :progress="progress" />
+  <div class="app">
+    <WorldCanvas />
 
-    <div id="overlay">
-      <div class="layer" id="layer-hero" :style="heroStyle">
-        <div class="hero-copy">
-          <h1>Hey</h1>
-          <h1>I'm Alice</h1>
-        </div>
-        <div class="hero-photo">
-          <img src="/images/main_pic.JPG" alt="Alice">
-        </div>
-      </div>
+    <div class="story">
+      <ConstellationLines />
+      <main>
+        <TextBlock :range="T.hero" class="hero" label="Introduction" passive>
+          <div class="hero-copy scrim">
+            <h1 class="hero-title">{{ hero.greeting }}</h1>
+          </div>
+          <img class="sr-only" :src="hero.photo.src" :alt="hero.photo.alt" width="800" height="1200">
+        </TextBlock>
 
-      <div class="layer" id="layer-fog" :style="fogStyle">
-        <p>I spend most of my time thinking about people.</p>
-      </div>
+        <TextBlock :range="T.people" passive>
+          <p class="lede scrim people">{{ people }}</p>
+        </TextBlock>
 
-      <div class="layer" id="layer-goal" :style="goalStyle">
-        <p>A life-long goal</p>
-        <p class="indent">is to make meaningful connections</p>
-      </div>
+        <TextBlock :range="T.goal" class="goal" passive>
+          <p class="lede scrim">{{ goal }}</p>
+        </TextBlock>
 
-      <div class="layer" id="layer-earth" :style="earthStyle">
-        <p>
-          I want to learn about human behaviour, strategize a mathematical
-          formula, and cater to the subconscious.
-        </p>
-      </div>
-
-      <div class="layer" id="layer-work" :style="workStyle">
-        <h2>Work</h2>
-        <ul class="work-list">
-          <li>Fraud Mitigation</li>
-          <li>Product Strategy</li>
-          <li>Risk</li>
-        </ul>
-        <p>Under all of it, what I'm really passionate about is human intention and desire:</p>
-        <ol class="passion-list">
-          <li>Learning about human behaviour</li>
-          <li>Formulating a path</li>
-          <li>Catering to the subconscious</li>
-        </ol>
-      </div>
-
-      <div class="layer" id="layer-about" :style="aboutStyle">
-        <h2>About Me</h2>
-        <div class="about-facts">
-          <p><strong>Education:</strong> Math / BBA at UW / WLU</p>
-          <p><strong>From:</strong> Markham, Ontario</p>
-          <p><strong>Favorite place:</strong> Downtown Markham</p>
-        </div>
-        <div class="hobby-grid">
-          <div class="hobby-card">Gym</div>
-          <div class="hobby-card">Travel</div>
-          <div class="hobby-card">Food</div>
-          <div class="hobby-card">Friends</div>
-        </div>
-      </div>
+        <SignText />
+        <WorkSection />
+        <AboutSection />
+        <ContactStars />
+      </main>
     </div>
 
-    <div id="scroll-hint" :style="{ opacity: 1 - ramp(progress, 0, 0.025) }">scroll</div>
+    <LoaderOverlay />
+    <SoundToggle />
+    <div class="scroll-space" :style="{ height: `${SCROLL_SVH}svh` }" aria-hidden="true" />
   </div>
 </template>
 
-<script setup>
-import { computed } from 'vue'
-import { useScrollProgress } from './composables/useScrollProgress'
-import { ramp, bell } from './utils/easing'
-import { T } from './utils/timeline'
+<style>
+.hero {
+  align-items: flex-start;
+}
+.hero-copy {
+  margin-left: 6vw;
+  --scrim: rgba(7, 26, 78, 0.74);
+  --scrim-core: 62%;
+  --scrim-inset: -80% -24%;
+}
+.hero-title {
+  margin: 0;
+  font-size: clamp(2.6rem, 7vw, 5.6rem);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  font-weight: 800;
+  text-align: left;
+  text-shadow: 0 2px 3px rgba(5, 18, 60, 0.55), 0 0 30px rgba(5, 18, 60, 0.45);
+}
+.people {
+  --scrim: rgba(14, 18, 66, 0.66);
+}
+.goal {
+  justify-content: flex-end;
+  padding-bottom: max(14vh, 80px);
+}
+.goal .lede {
+  --scrim: rgba(2, 4, 20, 0.55);
+}
 
-const { progress } = useScrollProgress()
-
-function layerStyle(v) {
-  return {
-    opacity: v,
-    filter: `blur(${(1 - v) * 12}px)`,
-    transform: `translateY(${(1 - v) * 16}px)`,
-    pointerEvents: v > 0.6 ? 'auto' : 'none',
+@media (max-aspect-ratio: 1/1) {
+  .hero {
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: max(14vh, 72px);
+  }
+  .hero-copy {
+    margin-left: 0;
+  }
+  .hero-title {
+    text-align: center;
   }
 }
-const heroStyle = computed(() => layerStyle(1 - ramp(progress.value, ...T.heroFade)))
-const fogStyle = computed(() => layerStyle(bell(progress.value, ...T.fog)))
-const goalStyle = computed(() => layerStyle(bell(progress.value, ...T.goal)))
-const earthStyle = computed(() => layerStyle(bell(progress.value, ...T.earthParagraph)))
-const workStyle = computed(() => layerStyle(bell(progress.value, ...T.work)))
-const aboutStyle = computed(() => layerStyle(bell(progress.value, ...T.about)))
-</script>
 
-<style>
-#layer-hero { flex-direction: row; gap: 5rem; }
-.hero-copy { display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 1.5rem; }
-.hero-copy h1 { font-size: 5rem; text-shadow: 0 2px 18px rgba(20, 50, 90, 0.35); }
-.hero-photo {
-  flex-shrink: 0;
-  width: clamp(140px, 16vw, 220px);
-  aspect-ratio: 2 / 3;
-  padding: 6px;
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  background: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 24px rgba(20, 50, 90, 0.25);
+/* Without WebGL: a plain, readable page. */
+.no-webgl body {
+  background: #0b1030;
 }
-.hero-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-#layer-fog p, #layer-goal p {
-  text-shadow: 0 2px 14px rgba(10, 14, 30, 0.6);
+.no-webgl .story {
+  position: static;
+  overflow: visible;
 }
-#layer-goal p.indent { margin-left: 2.5rem; font-size: 1.6rem; }
-#layer-goal p:first-child { font-size: 1.6rem; }
-
-#layer-earth p {
-  color: #1d3a1a;
-  text-shadow: none;
-  background: rgba(255, 255, 255, 0.55);
-  padding: 1.5rem 2rem;
-  border-radius: 14px;
-  font-size: 1.3rem;
-  line-height: 1.6;
+.no-webgl .block {
+  position: relative;
+  inset: auto;
+  min-height: 60vh;
+  opacity: 1 !important;
+  filter: none !important;
+  transform: none !important;
+  pointer-events: auto;
 }
-
-.work-list, .hobby-grid { list-style: none; }
-.work-list {
-  display: flex; gap: 1.25rem; flex-wrap: wrap; justify-content: center;
+.no-webgl .block * {
+  pointer-events: auto;
 }
-.work-list li {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 0.65rem 1.4rem;
-  border-radius: 8px;
-  font-weight: 600;
+.no-webgl .scroll-space,
+.no-webgl .scroll-hint,
+.no-webgl .constellation,
+.no-webgl .loader {
+  display: none;
 }
-.passion-list { list-style: decimal; text-align: left; max-width: 460px; margin: 0 auto; }
-.passion-list li { margin-bottom: 0.4rem; }
-
-.about-facts { display: flex; flex-direction: column; gap: 0.6rem; font-size: 1.1rem; margin-bottom: 1.5rem; }
-.about-facts strong { color: #9fd0f0; }
-
-.hobby-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(140px, 200px));
-  gap: 1.25rem;
+.no-webgl .role,
+.no-webgl .star-link {
+  position: relative;
+  opacity: 1 !important;
+  transform: none !important;
+  display: inline-block;
+  width: auto;
+  height: auto;
+  margin: 0.5rem;
 }
-.hobby-card {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 150, 90, 0.4);
-  border-radius: 12px;
-  padding: 1.6rem 1rem;
-  font-size: 1.15rem;
-  font-weight: 600;
+.no-webgl .star-label,
+.no-webgl .star-dot {
+  position: static;
 }
-
-@media (max-width: 640px) {
-  .hero-copy h1 { font-size: 2.75rem; }
-  #layer-hero { flex-direction: column; gap: 2rem; }
+.no-webgl .block .sr-only {
+  position: static !important;
+  width: auto;
+  height: auto;
+  margin: 0 auto 1rem;
+  max-width: 40rem;
+  clip: auto;
+  clip-path: none;
+  white-space: normal;
 }
 </style>

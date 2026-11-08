@@ -1,20 +1,28 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  compatibilityDate: '2025-07-15',
-  devtools: { enabled: true },
+  compatibilityDate: '2026-11-01',
+  devtools: { enabled: false },
   ssr: false,
   app: {
     baseURL: '/',
     head: {
+      htmlAttrs: { lang: 'en' },
       title: 'Alice Chen',
-      link: [
-        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
-        { href: 'https://fonts.googleapis.com/css2?family=Alice&display=swap', rel: 'stylesheet' },
+      meta: [
+        { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
+        { name: 'description', content: 'Alice Chen — a scroll through air, earth, water and fire. Math/BBA at Waterloo and Laurier, thinking about people.' },
+        { name: 'theme-color', content: '#cfe6ff' },
+        { property: 'og:title', content: 'Alice Chen' },
+        { property: 'og:description', content: 'A scroll through air, earth, water and fire.' },
+        { property: 'og:url', content: 'https://alicechen.art' },
       ],
+      link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
     },
   },
-  css: ['~/assets/global.css'],
+  css: ['~/assets/main.css'],
+  vite: {
+    build: { chunkSizeWarningLimit: 1200 },
+  },
   nitro: {
     preset: 'github_pages',
   },

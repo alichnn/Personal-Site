@@ -1,0 +1,205 @@
+:root {
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-carved: ui-serif, 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --ink: #ffffff;
+  --card: #fbf5ea;
+  --card-ink: #2a1d14;
+  --focus: #ffd27a;
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  /* matches the inside of the opening cloud bank, so there's no flash before WebGL starts */
+  background: #e9f3ff;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font);
+  color: var(--ink);
+  line-height: 1.5;
+  overscroll-behavior: none;
+}
+
+/* Lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* ------------------------------------------------------------------ layers */
+
+.scroll-space {
+  width: 1px;
+}
+
+.world {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+.world-canvas,
+.world-fade {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.world-fade {
+  pointer-events: none;
+  opacity: 0;
+}
+.world-css {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.story {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* A story block: absolutely placed, scrubbed in and out by progress. */
+.block {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, 5vw) max(16px, env(safe-area-inset-bottom));
+  text-align: center;
+  opacity: 0;
+  will-change: opacity, transform, filter;
+}
+.block.is-live,
+.block.is-live * {
+  pointer-events: auto;
+}
+.block.is-live.passive,
+.block.is-live.passive * {
+  pointer-events: none;
+}
+
+/* Legibility: a soft radial scrim sits behind every block's text. */
+.scrim {
+  position: relative;
+  isolation: isolate;
+}
+.scrim::before {
+  content: '';
+  position: absolute;
+  inset: var(--scrim-inset, -55% -28%);
+  z-index: -1;
+  background: radial-gradient(closest-side, var(--scrim, rgba(6, 18, 52, 0.62)) 0%, var(--scrim, rgba(6, 18, 52, 0.62)) var(--scrim-core, 45%), transparent 100%);
+  pointer-events: none;
+}
+
+.lede {
+  margin: 0;
+  max-width: 22ch;
+  font-size: clamp(1.6rem, 4.2vw, 3rem);
+  font-weight: 600;
+  line-height: 1.18;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  text-shadow: 0 1px 2px rgba(4, 10, 30, 0.6), 0 0 22px rgba(4, 10, 30, 0.45);
+}
+
+/* ------------------------------------------------------------------ carved sign */
+
+.sign-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 70px;
+  font-family: var(--font-carved);
+  font-size: 66px;
+  line-height: 1.24;
+  font-weight: 700;
+  text-align: center;
+  color: #2a1204;
+  user-select: text;
+}
+.sign-text p {
+  margin: 0;
+}
+.sign-word {
+  display: inline-block;
+  /* burned in: a dark groove with a pale lower lip catching the light */
+  text-shadow: 0 2px 0 rgba(255, 226, 180, 0.55), 0 -1px 0 rgba(40, 15, 0, 0.6);
+}
+
+/* ------------------------------------------------------------------ buttons */
+
+.icon-btn {
+  appearance: none;
+  border: 0;
+  background: rgba(10, 16, 34, 0.55);
+  color: #fff;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background 0.2s ease;
+}
+.icon-btn:hover {
+  background: rgba(10, 16, 34, 0.75);
+}
+.icon-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .block {
+    will-change: opacity;
+  }
+}

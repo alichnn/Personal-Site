@@ -9,6 +9,9 @@ dist
 # Node dependencies
 node_modules
 
+# Original photos (full-size, may contain EXIF/GPS). Run `npm run images` to regenerate public/ variants.
+assets-src/
+
 # Logs
 logs
 *.log
