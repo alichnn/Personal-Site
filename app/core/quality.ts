@@ -20,7 +20,7 @@ export interface Quality {
 }
 
 export const QUALITY: Record<Tier, Quality> = {
-  high: { tier: 'high', dpr: 1.5, msaa: 0, grass: 64000, stars: 3600, particles: 1, seeds: 220, clouds: 1, shadows: true, bloomScale: 0.5 },
+  high: { tier: 'high', dpr: 2, msaa: 0, grass: 64000, stars: 3600, particles: 1, seeds: 220, clouds: 1, shadows: true, bloomScale: 0.5 },
   medium: { tier: 'medium', dpr: 1.25, msaa: 0, grass: 28000, stars: 2400, particles: 0.6, seeds: 150, clouds: 0.72, shadows: false, bloomScale: 0.35 },
   low: { tier: 'low', dpr: 1, msaa: 0, grass: 11000, stars: 1500, particles: 0.35, seeds: 90, clouds: 0.5, shadows: false, bloomScale: 0.25 },
 }

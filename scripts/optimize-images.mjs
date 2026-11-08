@@ -1,6 +1,6 @@
 // Resizes the original photos in assets-src/ into the web variants under public/.
 //   assets-src/albums/<album>/<slug>.jpg  ->  public/albums/<album>/<slug>-{400,800}.{avif,webp}  (4:5 crop)
-//   assets-src/hero/alice.jpg             ->  public/images/alice-{400,800}.webp                 (uncropped)
+//   assets-src/hero/alice.jpg             ->  public/images/alice-1600.webp                      (uncropped, high quality)
 // Metadata (EXIF, GPS) is stripped. Originals are gitignored; the outputs are committed.
 import { readdir, mkdir, stat } from 'node:fs/promises'
 import { join, parse } from 'node:path'
@@ -25,7 +25,7 @@ async function newer(input, output) {
   }
 }
 
-async function variants(input, dir, slug, ratio, widths, formats) {
+async function variants(input, dir, slug, ratio, widths, formats, q = { avif: 52, webp: 78 }) {
   await mkdir(dir, { recursive: true })
   const meta = await sharp(input).rotate().metadata()
   const fx = FOCUS_X[slug]
@@ -43,7 +43,7 @@ async function variants(input, dir, slug, ratio, widths, formats) {
         const left = Math.max(0, Math.min(W - cw, Math.round(fx * W - cw / 2)))
         img = img.extract({ left, top: 0, width: cw, height: H }).resize(w, h)
       } else img = img.resize(w, h, { fit: 'cover', position: sharp.strategy.attention })
-      await (fmt === 'avif' ? img.avif({ quality: 52, effort: 6 }) : img.webp({ quality: 78, effort: 5 })).toFile(file)
+      await (fmt === 'avif' ? img.avif({ quality: q.avif, effort: 6 }) : img.webp({ quality: q.webp, effort: 5 })).toFile(file)
       console.log('wrote', file.replace(root, ''))
     }
   }
@@ -58,4 +58,5 @@ for (const album of await readdir(join(src, 'albums'))) {
   }
 }
 
-await variants(join(src, 'hero', 'alice.jpg'), join(out, 'images'), 'alice', null, [400, 800], ['webp'])
+// the hero photo is the one image seen large and up close in 3D, so it gets more pixels and less compression
+await variants(join(src, 'hero', 'alice.jpg'), join(out, 'images'), 'alice', null, [1600], ['webp'], { webp: 88 })

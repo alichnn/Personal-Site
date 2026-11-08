@@ -4,11 +4,11 @@ import { roles } from '~/data/content'
 </script>
 
 <template>
-  <!-- each role's 3D lettering floats above its lily pad (scenes/words.ts) -->
+  <!-- each role's lettering floats above its lily pad (scenes/words.ts) -->
   <TextBlock :range="T.work" label="Work" class="work">
     <h2 class="work-title ghost headline">Work</h2>
     <ul class="sr-only">
-      <li v-for="(r, i) in roles" :key="i">{{ r.role }}, {{ r.company }}. {{ r.line }}</li>
+      <li v-for="(r, i) in roles" :key="i">{{ r.role }}, {{ r.company }}, {{ r.line }}</li>
     </ul>
   </TextBlock>
 </template>

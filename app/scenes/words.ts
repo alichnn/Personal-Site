@@ -1,20 +1,17 @@
 import { Group, MathUtils, Matrix4, Quaternion, Vector3 } from 'three'
 import type { World, WorldModule } from '../core/world'
 import { preloadFont } from 'troika-three-text'
-import { Lettering, loadFont, type LetteringLayout, type LetteringStyle } from '../core/lettering'
-import { FLAT_FONT, FlatText, type FlatStyle } from '../core/flattext'
+import { FLAT_FONT, FlatText, HEADLINE_FONT, type FlatLayout, type FlatStyle } from '../core/flattext'
 import { state } from '../core/state'
 import { T, roleSlot, smooth, type Range4 } from '../core/timeline'
 import { about, contacts, earth, goal, people, roles } from '../data/content'
-import type { Font } from 'three/examples/jsm/loaders/FontLoader.js'
 
-// All story text, floating in the world. The big headlines are chunky 3D lettering
-// (Redaction 50); sentences, paragraphs and labels are flat, vector-crisp text (Redaction 20)
-// with a clean outline and a soft halo, which reads better at small sizes.
+// All story text, floating in the world, as flat, vector-crisp SDF text with a clean outline and
+// a soft halo: headlines in Redaction Bold, sentences, paragraphs and labels in Redaction 20.
 //
 // Each line still exists as real HTML (for screen readers, search and keyboard focus) in the
 // same responsive layout, just invisible ("ghost" text). This module measures where each ghost
-// sits on screen at its section's resting camera pose and puts the 3D lettering at that spot in
+// sits on screen at its section's resting camera pose and puts the lettering at that spot in
 // the world, so CSS decides the layout and the letters live in the scene.
 
 const UP = new Vector3(0, 1, 0)
@@ -28,53 +25,54 @@ interface Pose {
   fov: number
 }
 
-type Label = Lettering | FlatText
-
 interface GhostItem {
   sel: string
-  /** 3D extruded headline, or flat crisp text. */
-  kind: '3d' | 'flat'
   /** Progress where the camera rests while this text holds. */
   rest: number
   /** Distance from the resting camera, in world units. */
   dist: number
   range: Range4
-  style: LetteringStyle | FlatStyle
+  style: FlatStyle
   /** Gentle float, in world units. */
   bob?: number
-  letter?: Label
+  letter?: FlatText
   anchor?: Vector3
   phase: number
 }
 
-const sky = (color: string, outline: string, extra: Partial<LetteringStyle> = {}): LetteringStyle => ({ color, outline, lit: 0.45, outlineWidth: 0.075, depth: 0.26, ...extra })
+/** Headline lettering: clean bold serif, a crisp outline and a tight, low-key shadow (no glow). */
+const headline = (color: string, outline: string, shadow: string, extra: Partial<FlatStyle> = {}): FlatStyle => ({
+  font: HEADLINE_FONT, color, outline, outlineWidth: 0.045, halo: shadow, haloOpacity: 0.32, haloWidth: 0.05, haloBlur: 0.22, letterSpacing: 0.01, ...extra,
+})
 
 // Night and firelit colours stay just under the bloom threshold so they don't smear.
 const GHOSTS: GhostItem[] = [
   // closer than the photo frame (16) so the frame's little cloud never hides the letters
-  { sel: '.hero-title', kind: '3d', rest: 0.16, dist: 12, range: T.hero, style: sky('#fffdf6', '#14307e', { outlineWidth: 0.085, depth: 0.22 }), bob: 0.12, phase: 0 },
-  { sel: '.people', kind: 'flat', rest: 0.235, dist: 24, range: T.people, style: { color: '#fffaf5', outline: '#211a5c', halo: '#120c3a' }, bob: 0.15, phase: 1 },
-  { sel: '.goal .lede', kind: 'flat', rest: 0.375, dist: 26, range: T.goal, style: { color: '#cdd6f6', outline: '#0a1238', halo: '#02051a', haloOpacity: 0.6 }, bob: 0.15, phase: 2 },
-  { sel: '.earth-copy', kind: 'flat', rest: 0.56, dist: 9, range: T.sign, style: { color: '#3c200b', outline: '#fff4de', outlineWidth: 0.08, halo: '#fff4de', haloOpacity: 0.55 }, bob: 0.04, phase: 3 },
-  { sel: '.work-title', kind: '3d', rest: 0.74, dist: 14, range: T.work, style: sky('#ffffff', '#0b3b3d', { lit: 0.3, outlineWidth: 0.06, depth: 0.22 }), bob: 0.05, phase: 4 },
-  { sel: '.about-copy h2', kind: '3d', rest: 0.91, dist: 7, range: T.about, style: { color: '#f0d3ad', outline: '#2a1205', lit: 0.25, outlineWidth: 0.06, depth: 0.22 }, bob: 0.02, phase: 5 },
-  { sel: '.about-copy p', kind: 'flat', rest: 0.91, dist: 7, range: T.about, style: { color: '#f2dcbc', outline: '#2a1205', halo: '#0d0602', haloOpacity: 0.55 }, bob: 0.02, phase: 6 },
+  { sel: '.hero-title', rest: 0.16, dist: 12, range: T.hero, style: headline('#ffffff', '#1a3a8f', '#0b1d55', { outlineWidth: 0.06, haloOpacity: 0.4 }), bob: 0.12, phase: 0 },
+  { sel: '.people', rest: 0.235, dist: 24, range: T.people, style: { color: '#fffaf5', outline: '#211a5c', halo: '#120c3a' }, bob: 0.15, phase: 1 },
+  { sel: '.goal .lede', rest: 0.375, dist: 26, range: T.goal, style: { color: '#cdd6f6', outline: '#0a1238', halo: '#02051a', haloOpacity: 0.6 }, bob: 0.15, phase: 2 },
+  { sel: '.earth-copy', rest: 0.56, dist: 9, range: T.sign, style: { color: '#3c200b', outline: '#fff4de', outlineWidth: 0.08, halo: '#fff4de', haloOpacity: 0.55 }, bob: 0.04, phase: 3 },
+  { sel: '.work-title', rest: 0.74, dist: 14, range: T.work, style: headline('#ffffff', '#0b3b3d', '#04201f'), bob: 0.05, phase: 4 },
+  { sel: '.about-copy h2', rest: 0.91, dist: 7, range: T.about, style: headline('#f0d3ad', '#2a1205', '#0d0602', { haloOpacity: 0.5 }), bob: 0.02, phase: 5 },
+  { sel: '.about-copy p', rest: 0.91, dist: 7, range: T.about, style: { color: '#f2dcbc', outline: '#2a1205', halo: '#0d0602', haloOpacity: 0.55 }, bob: 0.02, phase: 6 },
 ]
 
 const ROLE_STYLE: FlatStyle = { color: '#f6fbfa', outline: '#0a3436', halo: '#04201f', haloOpacity: 0.5 }
 const COMPANY_STYLE: FlatStyle = { ...ROLE_STYLE, color: '#a8efe1' }
+/** Gap between a role's title and its company line, in CSS px at the pad's distance. */
+const ROLE_GAP = 6
 const CONTACT_STYLE: FlatStyle = { color: '#c3cdf2', outline: '#0d1a4a', halo: '#02051a', haloOpacity: 0.6 }
 
 /** Every character the flat text needs, so the font's glyph atlas is ready before the first reveal. */
+const HEADLINE_CHARS = () => GHOSTS.filter((g) => g.style.font === HEADLINE_FONT).map((g) => document.querySelector(g.sel)?.textContent ?? '').join('')
 const FLAT_CHARS = [people, goal, earth, about, ...roles.flatMap((r) => [r.role, r.company, r.line]), ...contacts.map((c) => c.label)].join('')
 
 export class Words implements WorldModule {
   range: [number, number] = [0, 1]
   group = new Group()
   built = false
-  /** 0..1 hover glow per contact link (set by the HTML links). */
-  contactGlow: number[] = []
-  private font!: Font
+  /** Hover glow per contact link, 0..1.6 (animated by the HTML links; objects so anime.js can tween them). */
+  contactGlow: { v: number }[] = []
   private roleLetters: FlatText[][] = []
   private contactLetters: FlatText[] = []
   private contactLabels: HTMLElement[] = []
@@ -84,11 +82,13 @@ export class Words implements WorldModule {
   private roleQuat = new Quaternion()
 
   async build(w: World) {
-    this.font = await loadFont()
-    await new Promise<void>((resolve) => preloadFont({ font: FLAT_FONT, characters: FLAT_CHARS }, resolve))
+    await Promise.all([
+      new Promise<void>((resolve) => preloadFont({ font: FLAT_FONT, characters: FLAT_CHARS }, resolve)),
+      new Promise<void>((resolve) => preloadFont({ font: HEADLINE_FONT, characters: HEADLINE_CHARS() }, resolve)),
+    ])
     // the HTML ghost layout uses the same fonts; wait for them so the measurements match
     await Promise.all([
-      document.fonts?.load('700 16px "Redaction 50"'),
+      document.fonts?.load('700 16px "Redaction"'),
       document.fonts?.load('400 16px "Redaction 20"'),
     ]).catch(() => {})
     this.layoutAll(w)
@@ -135,7 +135,7 @@ export class Words implements WorldModule {
     const k = this.pxToWorld(pose.fov, g.dist)
     const size = parseFloat(cs.fontSize) * k
     const align = cs.textAlign === 'left' || cs.textAlign === 'start' ? 'left' : cs.textAlign === 'right' ? 'right' : 'center'
-    const layout: LetteringLayout = {
+    const layout: FlatLayout = {
       size,
       maxWidth: r.width * k * 1.03,
       lineHeight: (parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.2) / parseFloat(cs.fontSize),
@@ -145,7 +145,7 @@ export class Words implements WorldModule {
     }
     if (!g.letter) {
       const text = el.textContent!.trim()
-      g.letter = g.kind === '3d' ? new Lettering(this.font, text, g.style as LetteringStyle, layout) : new FlatText(text, g.style as FlatStyle, layout)
+      g.letter = new FlatText(text, g.style, layout)
       this.group.add(g.letter.group)
     } else g.letter.layout(layout)
 
@@ -172,8 +172,7 @@ export class Words implements WorldModule {
       const max = (narrow ? innerWidth * 0.8 : 440) * k
       const specs: [string, FlatStyle, number][] = [
         [role.role, ROLE_STYLE, narrow ? 28 : 38],
-        [role.company, COMPANY_STYLE, narrow ? 23 : 29],
-        [role.line, ROLE_STYLE, narrow ? 20 : 25],
+        [`${role.company}, ${role.line}`, COMPANY_STYLE, narrow ? 23 : 29],
       ]
       let lines = this.roleLetters[i]
       if (!lines) {
@@ -194,7 +193,7 @@ export class Words implements WorldModule {
       if (!this.contactLetters[i]) {
         this.contactLetters[i] = new FlatText(el.textContent!.trim(), CONTACT_STYLE, layout)
         this.group.add(this.contactLetters[i]!.group)
-        this.contactGlow[i] = 0
+        this.contactGlow[i] = { v: 0 }
       } else this.contactLetters[i]!.layout(layout)
     })
   }
@@ -238,7 +237,7 @@ export class Words implements WorldModule {
         l.group.position.y += 0.5 + (motion ? Math.sin(t * 0.9 + i) * 0.05 : 0)
         l.group.quaternion.copy(this.roleQuat)
         l.group.translateY(y)
-        y -= l.height + 9 * k
+        y -= l.height + ROLE_GAP * k
       }
     })
 
@@ -253,12 +252,12 @@ export class Words implements WorldModule {
       this.tmp.set((cx / innerWidth) * 2 - 1, -((cy / innerHeight) * 2 - 1), 0.5).unproject(cam).sub(cam.position).normalize()
       l.group.position.copy(cam.position).addScaledVector(this.tmp, 30)
       l.group.quaternion.copy(cam.quaternion)
-      l.glow = this.contactGlow[i] ?? 0
+      l.glow = this.contactGlow[i]?.v ?? 0
     })
   }
 
-  private stackHeight(lines: Label[]) {
+  private stackHeight(lines: FlatText[]) {
     const k = lines[0]!.group.userData.k as number
-    return lines.reduce((a, l) => a + l.height + 10 * k, 0)
+    return lines.reduce((a, l) => a + l.height + ROLE_GAP * k, 0)
   }
 }

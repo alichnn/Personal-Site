@@ -24,7 +24,7 @@ Pushing to `main` deploys to GitHub Pages via `.github/workflows/deploy.yml`
 | --- | --- |
 | All copy, work roles, contact links | `app/data/content.ts` |
 | Photo albums (name, photos, alt text) | `app/data/albums.ts` |
-| Hero photo | `assets-src/hero/alice.jpg` → `npm run images` |
+| Hero photo | `assets-src/hero/alice.jpg` → `npm run images` (drawn as a printed photo in `app/scenes/hero.ts`) |
 | Album photos | `assets-src/albums/<album>/<slug>.jpg` → `npm run images`, then list in `albums.ts` |
 
 `npm run images` writes resized 4:5 AVIF/WebP variants to `public/` and strips EXIF/GPS.
@@ -51,11 +51,11 @@ individual quality settings.
   background streaming of later scenes, the quality probe and watchdog, and the reduced-motion crossfade.
 - `app/scenes/*`: one module per part of the world. Each has a progress `range`, a `build()`
   and an `update()`.
-- `app/scenes/words.ts`: all story text, floating in the world. Big headlines are chunky 3D
-  lettering in Redaction 50 (`app/core/lettering.ts`); sentences, paragraphs and labels are
-  flat, crisp SDF text in Redaction 20 with an outline and soft halo (`app/core/flattext.ts`). Each line also exists as invisible "ghost" HTML in the same layout, for
+- `app/scenes/words.ts`: all story text, floating in the world as crisp SDF text with an outline
+  and soft halo (`app/core/flattext.ts`): headlines in Redaction Bold, everything else in
+  Redaction 20. Each line also exists as invisible "ghost" HTML in the same layout, for
   screen readers, search and keyboard focus; the module measures each ghost's box at its section's
-  resting camera pose and places the 3D letters there. To restyle a line, edit its CSS (size,
-  position, wrap width) and the 3D text follows.
+  resting camera pose and places the letters there. To restyle a line, edit its CSS (size,
+  position, wrap width) and the world text follows.
 - `app/components/*`: the HTML layer (ghost text, album cards, contact links, sound toggle).
 - `app/core/audio.ts`: the ambient soundscape, synthesised with Web Audio (no audio files).

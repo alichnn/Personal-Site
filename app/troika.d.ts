@@ -7,6 +7,7 @@ declare module 'troika-three-text' {
     fontSize: number
     maxWidth: number
     lineHeight: number | 'normal'
+    letterSpacing: number
     textAlign: 'left' | 'right' | 'center' | 'justify'
     anchorX: number | string
     anchorY: number | string

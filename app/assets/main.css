@@ -1,9 +1,9 @@
-/* Redaction (OFL): 50 for the 3D headlines, the lighter-textured 20 for everything else. */
+/* Redaction (OFL): clean Bold for the headlines, the lighter-textured 20 for everything else. */
 @font-face {
-  font-family: 'Redaction 50';
+  font-family: 'Redaction';
   font-weight: 700;
   font-display: swap;
-  src: url('/fonts/redaction-50-700.woff2') format('woff2');
+  src: url('/fonts/redaction-700.woff2') format('woff2');
 }
 @font-face {
   font-family: 'Redaction 20';
@@ -14,7 +14,7 @@
 
 :root {
   --font-display: 'Redaction 20', ui-serif, Georgia, serif;
-  --font-headline: 'Redaction 50', ui-serif, Georgia, serif;
+  --font-headline: 'Redaction', ui-serif, Georgia, serif;
   --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-carved: ui-serif, 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
   --ink: #ffffff;
@@ -141,7 +141,7 @@ html.lenis body {
 }
 
 /*
- * Ghost text: the real, accessible HTML for each line, laid out exactly where its 3D lettering
+ * Ghost text: the real, accessible HTML for each line, laid out exactly where its lettering
  * floats in the world (scenes/words.ts measures these boxes), but not painted itself.
  */
 .ghost {

@@ -2,7 +2,7 @@
 
 export const hero = {
   greeting: 'Hey, I’m Alice',
-  photo: { src: '/images/alice-800.webp', width: 800, height: 1027, alt: 'Alice at a wooden railing at dusk, tucking her hair back, trees behind her.' },
+  photo: { src: '/images/alice-1600.webp', width: 1600, height: 2053, alt: 'Alice at a wooden railing at dusk, tucking her hair back, trees behind her.' },
 }
 
 export const people = 'I spend most of my time thinking about people.'
@@ -35,10 +35,9 @@ export interface ContactLink {
   star: number
 }
 
-// TODO(Alice): replace the placeholder email, LinkedIn and résumé links.
 export const contacts: ContactLink[] = [
-  { label: 'Email', href: 'mailto:hello@alicechen.art', star: 0 },
-  { label: 'LinkedIn', href: 'https://www.linkedin.com/', star: 1 },
+  { label: 'Email', href: 'mailto:alice.chen1@uwaterloo.ca', star: 0 },
+  { label: 'LinkedIn', href: 'https://www.linkedin.com/in/alice-chen-ac384/', star: 1 },
   { label: 'GitHub', href: 'https://github.com/alichnn', star: 2 },
-  { label: 'Résumé', href: '/resume.pdf', star: 3 },
+  { label: 'Gallery', href: 'https://vsco.co/alicechen-/gallery', star: 3 },
 ]

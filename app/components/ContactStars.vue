@@ -31,7 +31,8 @@ useFrame(() => {
 
 function glow(e: Event, on: boolean) {
   const i = links.value.indexOf(e.currentTarget as HTMLAnchorElement)
-  if (world && i >= 0) animate(world.words.contactGlow, { [i]: on ? 1.6 : 0, duration: 320, ease: 'outQuad' })
+  const g = world?.words.contactGlow[i]
+  if (g) animate(g, { v: on ? 1.6 : 0, duration: 320, ease: 'outQuad' })
   const dot = (e.currentTarget as HTMLElement).querySelector('.star-dot')
   if (dot) animate(dot, { scale: on ? 1.7 : 1, opacity: on ? 1 : 0.85, duration: 320, ease: 'outQuad' })
 }

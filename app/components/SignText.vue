@@ -4,7 +4,7 @@ import { earth } from '~/data/content'
 </script>
 
 <template>
-  <!-- the 3D lettering floats over the meadow beside the signpost (scenes/words.ts) -->
+  <!-- the lettering floats over the meadow beside the signpost (scenes/words.ts) -->
   <TextBlock :range="T.sign" label="In the meadow" passive>
     <p class="earth-copy ghost">{{ earth }}</p>
   </TextBlock>

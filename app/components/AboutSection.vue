@@ -89,7 +89,7 @@ function trapTab(e: KeyboardEvent) {
 <template>
   <TextBlock :range="T.about" label="About me" class="about">
     <div ref="inner" class="about-inner">
-      <!-- the 3D lettering floats in the firelight here (scenes/words.ts) -->
+      <!-- the lettering floats in the firelight here (scenes/words.ts) -->
       <div class="about-copy">
         <h2 class="ghost headline">About me</h2>
         <p class="ghost">{{ about }}</p>
