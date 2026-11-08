@@ -6,6 +6,8 @@ import { Text } from 'troika-three-text'
 // behind it keeps the words readable over busy clouds, grass and water.
 
 export const FLAT_FONT = '/fonts/redaction-20-400.woff'
+/** Redaction 50 Bold (the textured cut), for the hero greeting. */
+export const HERO_FONT = '/fonts/redaction-50-700.woff'
 /** Clean (un-eroded) Redaction Bold, for the section headlines. */
 export const HEADLINE_FONT = '/fonts/redaction-700.woff'
 

@@ -13,7 +13,8 @@ import { earth } from '~/data/content'
 <style scoped>
 .earth-copy {
   position: absolute;
-  top: max(8vh, 48px);
+  /* just above the signpost's arrows */
+  top: max(25vh, 120px);
   left: 0;
   right: 0;
   width: min(820px, 90vw);

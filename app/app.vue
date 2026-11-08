@@ -51,10 +51,14 @@ ui.reduced = matchMedia('(prefers-reduced-motion: reduce)').matches || new URLSe
 }
 .hero-title {
   margin: 0;
+  font-family: 'Redaction 50', var(--font-headline);
   font-size: clamp(2.6rem, 7vw, 5.6rem);
   line-height: 1.22;
   text-align: left;
   max-width: 44vw;
+}
+.goal .lede {
+  max-width: 30ch;
 }
 .goal {
   justify-content: flex-end;

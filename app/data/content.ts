@@ -5,12 +5,17 @@ export const hero = {
   photo: { src: '/images/alice-1600.webp', width: 1600, height: 2053, alt: 'Alice at a wooden railing at dusk, tucking her hair back, trees behind her.' },
 }
 
-export const people = 'I spend most of my time thinking about people.'
+export const people = 'My interest lies in people…'
 
-export const goal = 'A life-long goal is to make meaningful connections.'
+export const goal = 'and a life-long goal of mine is to drive meaningful connections, for both myself and others.'
 
-export const earth =
-  'I want to learn about human behaviour, strategize it into something as precise as a mathematical formula, and design for the subconscious.'
+export const earth = 'I hope to bring this into my work, by understanding how people think and designing for it.'
+
+/** The two arrows on the meadow signpost. */
+export const signArrows: { label: string; dir: 'left' | 'right' }[] = [
+  { label: 'Dim Sum', dir: 'right' },
+  { label: 'Deadlifts', dir: 'left' },
+]
 
 export interface Role {
   role: string

@@ -22,9 +22,9 @@ Pushing to `main` deploys to GitHub Pages via `.github/workflows/deploy.yml`
 
 | What | Where |
 | --- | --- |
-| All copy, work roles, contact links | `app/data/content.ts` |
+| All copy, work roles, signpost arrows, contact links | `app/data/content.ts` |
 | Photo albums (name, photos, alt text) | `app/data/albums.ts` |
-| Hero photo | `assets-src/hero/alice.jpg` → `npm run images` (drawn as a printed photo in `app/scenes/hero.ts`) |
+| Hero photo | `assets-src/hero/alice.jpg` → `npm run images` (framed in toon wood in `app/scenes/hero.ts`) |
 | Album photos | `assets-src/albums/<album>/<slug>.jpg` → `npm run images`, then list in `albums.ts` |
 
 `npm run images` writes resized 4:5 AVIF/WebP variants to `public/` and strips EXIF/GPS.
@@ -52,8 +52,8 @@ individual quality settings.
 - `app/scenes/*`: one module per part of the world. Each has a progress `range`, a `build()`
   and an `update()`.
 - `app/scenes/words.ts`: all story text, floating in the world as crisp SDF text with an outline
-  and soft halo (`app/core/flattext.ts`): headlines in Redaction Bold, everything else in
-  Redaction 20. Each line also exists as invisible "ghost" HTML in the same layout, for
+  and soft halo (`app/core/flattext.ts`): the hero greeting in Redaction 50, the other headlines
+  in Redaction Bold, everything else in Redaction 20. Each line also exists as invisible "ghost" HTML in the same layout, for
   screen readers, search and keyboard focus; the module measures each ghost's box at its section's
   resting camera pose and places the letters there. To restyle a line, edit its CSS (size,
   position, wrap width) and the world text follows.

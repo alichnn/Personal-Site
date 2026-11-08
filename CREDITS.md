@@ -16,7 +16,7 @@ None imported. The ambient soundscape is synthesised at runtime with the Web Aud
 All photos are © Alice Chen.
 
 ## Fonts
-[Redaction](https://www.redaction.us) (Redaction Bold for headlines, Redaction 20 for other text),
+[Redaction](https://www.redaction.us) (Redaction 50 Bold for the hero greeting, Redaction Bold for other headlines, Redaction 20 for other text),
 © 2019 MCKL Inc., SIL Open Font License 1.1 (`public/fonts/OFL.txt`), via Fontsource.
 UI chrome uses the system font stack.
 

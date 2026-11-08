@@ -1,4 +1,10 @@
-/* Redaction (OFL): clean Bold for the headlines, the lighter-textured 20 for everything else. */
+/* Redaction (OFL): the textured 50 for the hero, clean Bold for the other headlines, 20 for everything else. */
+@font-face {
+  font-family: 'Redaction 50';
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/redaction-50-700.woff2') format('woff2');
+}
 @font-face {
   font-family: 'Redaction';
   font-weight: 700;

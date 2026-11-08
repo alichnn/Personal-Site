@@ -3,6 +3,7 @@ import type { World, WorldModule } from '../core/world'
 import { G, state } from '../core/state'
 import { SIGN, groundHeight } from '../core/layout'
 import { rng, range } from '../core/util'
+import { signArrows } from '../data/content'
 import { makeSignpost, makeSquirrel, makeSunflower } from './models'
 
 interface Flower { root: Group; head: Group; phase: number; baseYaw: number }
@@ -15,8 +16,8 @@ export class Meadow implements WorldModule {
   private flowers: Flower[] = []
   private squirrels: Squirrel[] = []
 
-  build(w: World) {
-    const sign = makeSignpost()
+  async build(w: World) {
+    const sign = await makeSignpost(signArrows)
     sign.root.position.set(SIGN.x, groundHeight(SIGN.x, SIGN.z) - 0.05, SIGN.z)
     // face the meadow camera
     const camPos = new Vector3(), look = new Vector3()

@@ -1,7 +1,7 @@
 import { Group, MathUtils, Matrix4, Quaternion, Vector3 } from 'three'
 import type { World, WorldModule } from '../core/world'
 import { preloadFont } from 'troika-three-text'
-import { FLAT_FONT, FlatText, HEADLINE_FONT, type FlatLayout, type FlatStyle } from '../core/flattext'
+import { FLAT_FONT, FlatText, HEADLINE_FONT, HERO_FONT, type FlatLayout, type FlatStyle } from '../core/flattext'
 import { state } from '../core/state'
 import { T, roleSlot, smooth, type Range4 } from '../core/timeline'
 import { about, contacts, earth, goal, people, roles } from '../data/content'
@@ -48,7 +48,7 @@ const headline = (color: string, outline: string, shadow: string, extra: Partial
 // Night and firelit colours stay just under the bloom threshold so they don't smear.
 const GHOSTS: GhostItem[] = [
   // closer than the photo frame (16) so the frame's little cloud never hides the letters
-  { sel: '.hero-title', rest: 0.16, dist: 12, range: T.hero, style: headline('#ffffff', '#1a3a8f', '#0b1d55', { outlineWidth: 0.06, haloOpacity: 0.4 }), bob: 0.12, phase: 0 },
+  { sel: '.hero-title', rest: 0.16, dist: 12, range: T.hero, style: headline('#ffffff', '#1a3a8f', '#0b1d55', { font: HERO_FONT, outlineWidth: 0.06, haloOpacity: 0.4 }), bob: 0.12, phase: 0 },
   { sel: '.people', rest: 0.235, dist: 24, range: T.people, style: { color: '#fffaf5', outline: '#211a5c', halo: '#120c3a' }, bob: 0.15, phase: 1 },
   { sel: '.goal .lede', rest: 0.375, dist: 26, range: T.goal, style: { color: '#cdd6f6', outline: '#0a1238', halo: '#02051a', haloOpacity: 0.6 }, bob: 0.15, phase: 2 },
   { sel: '.earth-copy', rest: 0.56, dist: 9, range: T.sign, style: { color: '#3c200b', outline: '#fff4de', outlineWidth: 0.08, halo: '#fff4de', haloOpacity: 0.55 }, bob: 0.04, phase: 3 },
@@ -64,7 +64,8 @@ const ROLE_GAP = 6
 const CONTACT_STYLE: FlatStyle = { color: '#c3cdf2', outline: '#0d1a4a', halo: '#02051a', haloOpacity: 0.6 }
 
 /** Every character the flat text needs, so the font's glyph atlas is ready before the first reveal. */
-const HEADLINE_CHARS = () => GHOSTS.filter((g) => g.style.font === HEADLINE_FONT).map((g) => document.querySelector(g.sel)?.textContent ?? '').join('')
+/** Characters each headline font needs, read from the ghost text. */
+const charsFor = (font: string) => GHOSTS.filter((g) => g.style.font === font).map((g) => document.querySelector(g.sel)?.textContent ?? '').join('')
 const FLAT_CHARS = [people, goal, earth, about, ...roles.flatMap((r) => [r.role, r.company, r.line]), ...contacts.map((c) => c.label)].join('')
 
 export class Words implements WorldModule {
@@ -84,11 +85,12 @@ export class Words implements WorldModule {
   async build(w: World) {
     await Promise.all([
       new Promise<void>((resolve) => preloadFont({ font: FLAT_FONT, characters: FLAT_CHARS }, resolve)),
-      new Promise<void>((resolve) => preloadFont({ font: HEADLINE_FONT, characters: HEADLINE_CHARS() }, resolve)),
+      ...[HEADLINE_FONT, HERO_FONT].map((font) => new Promise<void>((resolve) => preloadFont({ font, characters: charsFor(font) }, resolve))),
     ])
     // the HTML ghost layout uses the same fonts; wait for them so the measurements match
     await Promise.all([
       document.fonts?.load('700 16px "Redaction"'),
+      document.fonts?.load('700 16px "Redaction 50"'),
       document.fonts?.load('400 16px "Redaction 20"'),
     ]).catch(() => {})
     this.layoutAll(w)

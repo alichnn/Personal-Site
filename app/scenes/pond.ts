@@ -6,11 +6,8 @@ import {
   Color,
   DodecahedronGeometry,
   Group,
-  InstancedMesh,
-  Matrix4,
   Mesh,
   Points,
-  Quaternion,
   ShaderMaterial,
   UniformsLib,
   UniformsUtils,
@@ -27,10 +24,8 @@ import { flat, paint, rng, range } from '../core/util'
 import { toon } from '../core/toon'
 import { roles } from '../data/content'
 import { lilyPadGeometry, makeKoi, makeLotus } from './models'
-import { makeFlames } from './flame'
 
 const RIPPLES = 12
-const FLAMES = 40
 const EMBERS = 220
 
 const WATER_VERT = /* glsl */ `
@@ -137,7 +132,7 @@ void main() {
   float foam = step(edge, r) * (1.0 - step(edge + 0.06, r));
   col = mix(col, vec3(0.92, 0.97, 1.0) * (0.35 + uSunColor * 0.5 + uFireIntensity * 0.1), max(foam * 0.85, step(0.45, rings) * 0.75));
 
-  float alpha = mix(0.62, 0.9, depth);
+  float alpha = mix(0.46, 0.88, depth);
   alpha = max(alpha, max(burn, foam));
   gl_FragColor = vec4(col, alpha);
   #include <fog_fragment>
@@ -163,13 +158,8 @@ export class Pond implements WorldModule {
   private koi: Koi[] = []
   private decor: Pad[] = []
   private workPads: Group[] = []
-  private flames!: InstancedMesh
-  private flameBase: Vector3[] = []
   private embers!: Points
   private emberMat!: ShaderMaterial
-  private m = new Matrix4()
-  private q = new Quaternion()
-  private s = new Vector3()
   private v = new Vector3()
   private focusLook = new Vector3()
 
@@ -264,19 +254,12 @@ export class Pond implements WorldModule {
     // koi in two loose schools
     for (let i = 0; i < 8; i++) {
       const parts = makeKoi(40 + i)
-      parts.root.scale.setScalar(range(r, 0.8, 1.15))
+      parts.root.scale.setScalar(range(r, 1.75, 2.3))
       this.group.add(parts.root)
-      this.koi.push({ parts, school: i % 2, lag: Math.floor(i / 2) * 0.9 + r() * 0.3, offset: new Vector3(range(r, -1.4, 1.4), 0, range(r, -1.4, 1.4)) })
+      this.koi.push({ parts, school: i % 2, lag: Math.floor(i / 2) * 0.9 + r() * 0.3, offset: new Vector3(range(r, -2.4, 2.4), 0, range(r, -2.4, 2.4)) })
     }
 
-    // sunset fire: flame tongues on the water and rising embers
-    this.flames = makeFlames(FLAMES, 3)
-    ;(this.flames.material as ShaderMaterial).uniforms.uHeat!.value = 0.6
-    for (let i = 0; i < FLAMES; i++) {
-      const a = r() * Math.PI * 2, d = Math.sqrt(r()) * (POND_R - 3)
-      this.flameBase.push(new Vector3(POND.x + Math.cos(a) * d, WATER_Y, POND.z + Math.sin(a) * d))
-    }
-    this.group.add(this.flames)
+    // sunset fire: embers rising off the burning water
     this.buildEmbers(r)
   }
 
@@ -320,24 +303,25 @@ export class Pond implements WorldModule {
     geo.setAttribute('position', new BufferAttribute(pos, 3))
     geo.setAttribute('aSeed', new BufferAttribute(seed, 4))
     this.emberMat = new ShaderMaterial({
-      uniforms: { uTime: G.uTime, uAmount: { value: 0 }, uGather: { value: 0 }, uFire: { value: FIRE }, uPx: { value: 1 } },
+      uniforms: { uTime: G.uTime, uAmount: { value: 0 }, uGather: { value: 0 }, uPx: { value: 1 } },
       vertexShader: /* glsl */ `
         attribute vec4 aSeed; // phase, speed, height, wobble
         uniform float uTime;
         uniform float uGather;
-        uniform vec3 uFire;
         uniform float uPx;
         varying float vA;
         void main() {
           float life = fract(uTime * 0.25 * aSeed.y + aSeed.x);
+          // as the fire gathers, each ember dissipates where it is, at its own moment:
+          // it lifts a little further, shrinks and fades out
+          float fade = smoothstep(aSeed.w * 0.65, aSeed.w * 0.65 + 0.3, uGather);
           vec3 p = position;
-          p.xz = mix(p.xz, uFire.xz + (p.xz - uFire.xz) * 0.04, uGather * uGather);
-          p.y += life * aSeed.z * (1.0 - uGather * 0.5);
+          p.y += life * aSeed.z + fade * 1.2;
           p.x += sin(uTime * 2.0 + aSeed.w * 20.0) * 0.25 * life;
           vec4 mv = modelViewMatrix * vec4(p, 1.0);
           gl_Position = projectionMatrix * mv;
-          gl_PointSize = uPx * (1.0 + 2.5 * (1.0 - life)) * 6.0 / max(1.0, -mv.z * 0.12);
-          vA = sin(life * 3.14159);
+          gl_PointSize = uPx * (1.0 + 2.5 * (1.0 - life)) * (1.0 - fade * 0.6) * 6.0 / max(1.0, -mv.z * 0.12);
+          vA = sin(life * 3.14159) * (1.0 - fade);
         }`,
       fragmentShader: /* glsl */ `
         uniform float uAmount;
@@ -383,25 +367,10 @@ export class Pond implements WorldModule {
     u.uGlow!.value = glow
     u.uBurn!.value = burn
     u.uGather!.value = gather
-    this.emberMat.uniforms.uAmount!.value = burn * (1 - smooth(gather, 0.8, 1))
+    this.emberMat.uniforms.uAmount!.value = burn
     this.emberMat.uniforms.uGather!.value = gather
     this.embers.visible = burn > 0.001 && gather < 0.999
 
-    const fl = burn * (1 - smooth(gather, 0.85, 1))
-    this.flames.visible = fl > 0.001
-    if (this.flames.visible) {
-      for (let i = 0; i < FLAMES; i++) {
-        const b = this.flameBase[i]!
-        const own = smooth(burn, (i / FLAMES) * 0.6, (i / FLAMES) * 0.6 + 0.4)
-        const k = gather * gather
-        this.v.lerpVectors(b, FIRE, k)
-        this.v.y = WATER_Y + k * 0.25
-        const h = own * (1.1 + Math.sin(i * 7.7) * 0.5) * (1 - k * 0.7) * (0.8 + 0.2 * Math.sin(t * 9 + i))
-        this.s.set(h * 0.55, h, 1)
-        this.flames.setMatrixAt(i, this.m.compose(this.v, this.q.identity(), this.s))
-      }
-      this.flames.instanceMatrix.needsUpdate = true
-    }
 
     // the work pads idle in their own lanes; the camera eases toward whichever is in focus
     let total = 0
@@ -445,9 +414,10 @@ export class Pond implements WorldModule {
       const tt = swim * 0.16 - k.lag * 0.16 + k.school * 3.1
       const path = (time: number, out: Vector3) =>
         out.set(
-          POND.x + Math.cos(time) * (11 + Math.sin(time * 0.7) * 3) * (k.school ? 1 : 0.8),
-          WATER_Y - 0.42,
-          POND.z + Math.sin(time * (k.school ? 1 : -1)) * (8 + Math.cos(time * 1.3) * 2.5),
+          // a loop through the lighter middle band, where the water is clear enough to see them
+          POND.x + Math.cos(time) * (14.5 + Math.sin(time * 0.7) * 1.8) * (k.school ? 1 : 0.9),
+          WATER_Y - 0.44,
+          POND.z + Math.sin(time * (k.school ? 1 : -1)) * (12.5 + Math.cos(time * 1.3) * 1.8) * (k.school ? 1 : 0.9),
         )
       path(tt, k.parts.root.position).add(k.offset)
       path(tt + 0.03, this.v).add(k.offset)

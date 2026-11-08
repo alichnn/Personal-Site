@@ -2,14 +2,19 @@ import {
   BoxGeometry,
   BufferAttribute,
   BufferGeometry,
+  CanvasTexture,
   Color,
   ConeGeometry,
   CylinderGeometry,
   DodecahedronGeometry,
   DoubleSide,
+  ExtrudeGeometry,
   Group,
   IcosahedronGeometry,
   Mesh,
+  SRGBColorSpace,
+  Shape,
+  Vector2,
   type ColorRepresentation,
 } from 'three'
 import { addOutline, outlineAll, toon } from '../core/toon'
@@ -76,27 +81,150 @@ export function makeSunflower(seed: number) {
 
 // ---------------------------------------------------------------- signpost
 
-export function makeSignpost() {
+export interface SignArrow {
+  label: string
+  /** Which way the arrow points, seen from the front. */
+  dir: 'left' | 'right'
+}
+
+/**
+ * A storybook signpost: a rough-hewn post with a peaked cap, bevelled swallow-tail arrow planks
+ * with painted wood grain and carved lettering, nail heads, and moss and stones at its foot.
+ * The grain and lettering are painted into each plank's texture, so they stay crisp and cost
+ * nothing extra to draw.
+ */
+export async function makeSignpost(arrows: SignArrow[], font = '"Redaction", Georgia, serif') {
+  await document.fonts?.load(`700 64px ${font}`).catch(() => {})
   const root = new Group()
   const r = rng(5)
-  const wood = vc({ rim: 0.5 })
-  const post = new Mesh(paint(flat(new BoxGeometry(0.2, 2.7, 0.2)).translate(0, 1.35, 0), '#7b5130', 0.15, r), wood)
-  root.add(post)
-  // two arrow boards pointing different ways down the meadow
-  const arrowGeo = (len: number, color: string) => merge([
-    paint(flat(new BoxGeometry(len, 0.4, 0.1)).translate(len / 2 - 0.15, 0, 0), color, 0.12, r),
-    paint(flat(new ConeGeometry(0.32, 0.4, 3)).rotateZ(-Math.PI / 2).scale(1, 1, 0.3).translate(len - 0.15 + 0.2, 0, 0), color),
-  ])
-  const arrows: [number, number, number, string][] = [[2.35, 0.25, 1.35, '#d8a565'], [1.9, -0.18, 1.15, '#c48a4e']]
-  for (const [y, yaw, len, color] of arrows) {
-    const arrow = new Mesh(arrowGeo(len, color), wood)
-    arrow.position.set(0, y, 0.12)
-    arrow.rotation.set(0, yaw > 0 ? 0.25 : Math.PI - 0.3, yaw * 0.2)
-    root.add(arrow)
+  const H = 2.9
+
+  // post: seven-sided, slightly tapered and leaning, with a peaked cap
+  const post = paint(flat(new CylinderGeometry(0.105, 0.13, H, 7)).translate(0, H / 2, 0), '#7a4f2e', 0.18, r)
+  const cap = paint(flat(new ConeGeometry(0.15, 0.2, 7)).translate(0, H + 0.1, 0), '#6a4226', 0.1, r)
+  const collar = paint(flat(new CylinderGeometry(0.15, 0.15, 0.06, 7)).translate(0, H - 0.02, 0), '#5b381f', 0.1, r)
+  const postMesh = new Mesh(merge([post, cap, collar]), vc({ rim: 0.5 }))
+  postMesh.rotation.z = 0.025
+  root.add(postMesh)
+
+  const nail = toon('#4a4440', { rim: 0.9 })
+  const tall = 0.44, tip = 0.3, tail = 0.12
+  arrows.forEach((a, i) => {
+    const len = 1.15 + a.label.length * 0.07
+    const s = a.dir === 'right' ? 1 : -1
+    // swallow-tail plank pointing +x, mirrored for left
+    const pts: [number, number][] = [[-0.3, -tall / 2], [len, -tall / 2], [len + tip, 0], [len, tall / 2], [-0.3, tall / 2], [-0.3 + tail, 0]]
+    const shape = new Shape(pts.map(([x, y]) => new Vector2(x * s, y)))
+    const geo = new ExtrudeGeometry(shape, { depth: 0.08, bevelEnabled: true, bevelThickness: 0.025, bevelSize: 0.025, bevelSegments: 2, curveSegments: 1 })
+    geo.translate(0, 0, -0.04)
+    geo.computeBoundingBox()
+    const bb = geo.boundingBox!
+    // planar UVs across the face, so the painted plank lines up with the geometry
+    const pos = geo.getAttribute('position') as BufferAttribute
+    const uv = new Float32Array(pos.count * 2)
+    const bw = bb.max.x - bb.min.x, bh = bb.max.y - bb.min.y
+    for (let k = 0; k < pos.count; k++) {
+      uv[k * 2] = (pos.getX(k) - bb.min.x) / bw
+      uv[k * 2 + 1] = (pos.getY(k) - bb.min.y) / bh
+    }
+    geo.setAttribute('uv', new BufferAttribute(uv, 2))
+    const tex = paintPlank(a.label, pts.map(([x, y]) => [x * s, y]), bb.min.x, bb.max.y, bw, bh, font, i ? '#c9935a' : '#dba86c', 11 + i)
+    const board = new Mesh(geo, toon('#ffffff', { map: tex, rim: 0.45 }))
+    board.position.set(0, i ? 1.95 : 2.45, 0.17)
+    board.rotation.set(0, s * (i ? -0.12 : 0.1), (i ? -0.03 : 0.025) * s)
+    root.add(board)
+    // nail heads where the plank meets the post
+    for (const ny of [-0.1, 0.1]) {
+      const n = new Mesh(flat(new DodecahedronGeometry(0.03, 0)), nail)
+      n.position.set(0, ny, 0.075)
+      n.userData.noOutline = true
+      board.add(n)
+    }
+  })
+
+  // moss, tufts and stones at the foot
+  const foot: BufferGeometry[] = []
+  for (let k = 0; k < 6; k++) {
+    const a = (k / 6) * Math.PI * 2 + r() * 0.6, d = range(r, 0.12, 0.3)
+    const g = flat(blob(range(r, 0.09, 0.16), 0, 0.3, 30 + k, [1.3, 0.55, 1.2])).translate(Math.cos(a) * d, 0.03, Math.sin(a) * d)
+    foot.push(paint(g, k % 3 ? '#4f8a2c' : '#6aa53a', 0.12, r))
   }
+  for (const [x, z, rad] of [[0.38, 0.12, 0.11], [-0.3, 0.22, 0.08]] as const) {
+    foot.push(paint(flat(new DodecahedronGeometry(rad, 0)).scale(1.3, 0.7, 1).translate(x, rad * 0.4, z), '#9a958a', 0.1, r))
+  }
+  const footMesh = new Mesh(merge(foot), vc({ rim: 0.6 }))
+  footMesh.userData.noOutline = true
+  root.add(footMesh)
+
   root.traverse((o: any) => o.isMesh && (o.castShadow = true))
-  outlineAll(root, 0.025, '#2b1a10')
+  outlineAll(root, 0.022, '#2b1a10')
   return { root }
+}
+
+/** Long, wavy wood-grain strokes running along x across a w×h area of the canvas. */
+export function paintGrain(ctx: CanvasRenderingContext2D, w: number, h: number, r: () => number, lines = 16) {
+  for (let k = 0; k < lines; k++) {
+    const y0 = r() * h, amp = 2 + r() * 5, f = 0.004 + r() * 0.006, ph = r() * 9
+    ctx.beginPath()
+    for (let x = 0; x <= w; x += 16) ctx.lineTo(x, y0 + Math.sin(x * f + ph) * amp + Math.sin(x * f * 2.7) * amp * 0.4)
+    ctx.strokeStyle = `rgba(92, 52, 22, ${0.12 + r() * 0.18})`
+    ctx.lineWidth = 1.5 + r() * 3.5
+    ctx.stroke()
+  }
+}
+
+/** Paints one arrow plank: base colour, wavy grain, a knot, darker worn edges, and carved lettering. */
+function paintPlank(label: string, pts: [number, number][], minX: number, maxY: number, bw: number, bh: number, font: string, base: string, seed: number) {
+  const r = rng(seed)
+  const W = 1024, Hc = Math.round((W * bh) / bw)
+  const c = document.createElement('canvas')
+  c.width = W
+  c.height = Hc
+  const ctx = c.getContext('2d')!
+  const toPx = ([x, y]: [number, number]) => [((x - minX) / bw) * W, ((maxY - y) / bh) * Hc] as const
+  ctx.fillStyle = base
+  ctx.fillRect(0, 0, W, Hc)
+  paintGrain(ctx, W, Hc, r)
+  // a knot
+  const kx = W * (0.15 + r() * 0.15), ky = Hc * (0.25 + r() * 0.5)
+  for (let k = 3; k > 0; k--) {
+    ctx.beginPath()
+    ctx.ellipse(kx, ky, 7 * k + 4, 3.5 * k + 2, 0, 0, Math.PI * 2)
+    ctx.strokeStyle = `rgba(92, 52, 22, ${0.18 + 0.1 * k})`
+    ctx.lineWidth = 2.5
+    ctx.stroke()
+  }
+  // worn, darker edges (also what the bevelled sides pick up)
+  ctx.beginPath()
+  pts.forEach((p, k) => (k ? ctx.lineTo(...toPx(p)) : ctx.moveTo(...toPx(p))))
+  ctx.closePath()
+  ctx.strokeStyle = 'rgba(80, 44, 18, 0.55)'
+  ctx.lineWidth = Hc * 0.1
+  ctx.stroke()
+  // carved lettering, centred on the body of the plank (not the tip or tail)
+  const xs = pts.map((p) => toPx(p)[0])
+  const left = Math.min(...xs), right = Math.max(...xs)
+  const bodyL = left + (right - left) * (pts[0]![0] < pts[1]![0] ? 0.08 : 0.2)
+  const bodyR = right - (right - left) * (pts[0]![0] < pts[1]![0] ? 0.2 : 0.08)
+  let size = Hc * 0.52
+  ctx.font = `700 ${size}px ${font}`
+  const maxW = (bodyR - bodyL) * 0.9
+  const w = ctx.measureText(label).width
+  if (w > maxW) {
+    size *= maxW / w
+    ctx.font = `700 ${size}px ${font}`
+  }
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  const cx = (bodyL + bodyR) / 2, cy = Hc / 2 + size * 0.04
+  ctx.fillStyle = 'rgba(255, 236, 200, 0.55)'
+  ctx.fillText(label, cx, cy + size * 0.05)
+  ctx.fillStyle = '#3a2210'
+  ctx.fillText(label, cx, cy)
+  const tex = new CanvasTexture(c)
+  tex.colorSpace = SRGBColorSpace
+  tex.anisotropy = 8
+  return tex
 }
 
 // ---------------------------------------------------------------- bird
@@ -239,7 +367,7 @@ export function makeKoi(seed: number) {
   tail.add(new Mesh(fin, vc({ side: DoubleSide, rim: 0.5 })))
   root.add(tail)
   for (const s of [-1, 1]) {
-    const f = paint(new BufferGeometry().setAttribute('position', new BufferAttribute(new Float32Array([0, 0, 0, s * 0.3, -0.04, -0.12, 0, 0, -0.22]), 3)), '#ffd2b0')
+    const f = paint(new BufferGeometry().setAttribute('position', new BufferAttribute(new Float32Array([0, 0, 0, s * 0.19, -0.04, -0.2, 0, 0, -0.2]), 3)), '#ffd2b0')
     f.computeVertexNormals()
     const m = new Mesh(f, vc({ side: DoubleSide, rim: 0 }))
     m.position.set(s * 0.14, -0.08, 0.2)
