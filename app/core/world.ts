@@ -292,6 +292,8 @@ export class World {
     for (const m of this.modules) if (m.built) m.setQuality?.(this.quality)
     if (shadowsChanged) this.applyShadows()
     this.resize()
+    // resizing clears the canvas; redraw now so a mid-frame downgrade doesn't flash blank
+    if (this.ready) this.render()
     this.opts.onTier(tier)
   }
 

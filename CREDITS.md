@@ -16,10 +16,10 @@ None imported. The ambient soundscape is synthesised at runtime with the Web Aud
 All photos are © Alice Chen.
 
 ## Fonts
-[Fredoka](https://github.com/hafontia/Fredoka-One) by the Fredoka Project Authors, SIL Open Font License 1.1
-(`public/fonts/OFL.txt`). Instanced at SemiBold with overlaps removed and subset to Latin
-(`assets-fonts/`); `npm run font` converts it to `public/fonts/fredoka.json` for the 3D lettering.
-Everything else uses the system font stack.
+[Redaction](https://www.redaction.us) (Redaction 50 Bold for headlines, Redaction 20 for other text),
+© 2019 MCKL Inc., SIL Open Font License 1.1 (`public/fonts/OFL.txt`), via Fontsource.
+`npm run font` converts Redaction 50 Bold to `public/fonts/redaction-50.json` for the 3D headlines.
+UI chrome uses the system font stack.
 
 ## Libraries
 - [Nuxt](https://nuxt.com) / [Vue](https://vuejs.org): MIT
@@ -28,3 +28,4 @@ Everything else uses the system font stack.
 - [Lenis](https://github.com/darkroomengineering/lenis): MIT
 - [sharp](https://sharp.pixelplumbing.com) (build-time image resizing): Apache-2.0
 - [opentype.js](https://opentype.js.org) (build-time font conversion): MIT
+- [troika-three-text](https://github.com/protectwise/troika/tree/main/packages/troika-three-text) (crisp in-world text): MIT

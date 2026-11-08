@@ -6,7 +6,7 @@ import { roles } from '~/data/content'
 <template>
   <!-- each role's 3D lettering floats above its lily pad (scenes/words.ts) -->
   <TextBlock :range="T.work" label="Work" class="work">
-    <h2 class="work-title ghost">Work</h2>
+    <h2 class="work-title ghost headline">Work</h2>
     <ul class="sr-only">
       <li v-for="(r, i) in roles" :key="i">{{ r.role }}, {{ r.company }}. {{ r.line }}</li>
     </ul>
@@ -17,7 +17,7 @@ import { roles } from '~/data/content'
 .work {
   justify-content: flex-start;
   align-items: flex-start;
-  padding-top: max(11vh, 64px);
+  padding-top: max(17vh, 96px);
   padding-left: max(8vw, 24px);
 }
 .work-title {

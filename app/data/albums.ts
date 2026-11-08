@@ -24,6 +24,8 @@ export const albums: Album[] = [
     photos: [
       { src: '/albums/gym/mirror-flex', alt: 'Mirror selfie of Alice flexing her bicep in a blue sports bra.' },
       { src: '/albums/gym/game-night', alt: 'Alice in a fuzzy jacket at a busy sports venue with screens behind her.' },
+      { src: '/albums/gym/barbell-meet', alt: 'Alice setting up for a deadlift on the platform at the Apex Barbell Club meet.' },
+      { src: '/albums/gym/climbing-lounge', alt: 'Lying back on the padded edge of a foam pit in a bouldering gym.' },
     ],
   },
   {
@@ -39,6 +41,7 @@ export const albums: Album[] = [
       { src: '/albums/travel/rabbit-statue', alt: 'Alice beside a giant rabbit and koi sculpture in front of an ornate painted archway.' },
       { src: '/albums/travel/dotted-wall', alt: 'Alice in sunglasses on a bench against a black and white polka-dot wall.' },
       { src: '/albums/travel/window-cat', alt: 'A fluffy orange cat lounging by a window above a city street.' },
+      { src: '/albums/travel/lantern-canal', alt: 'Red lanterns and a canopied boat on a canal at dusk, with hills behind.' },
     ],
   },
   {
@@ -48,7 +51,6 @@ export const albums: Album[] = [
       { src: '/albums/food/cafe-croissants', alt: 'Croissants, a sandwich and coffee in floral teacups on a glass café table.' },
       { src: '/albums/food/katsu-udon', alt: 'A bowl of curry udon with pork katsu next to a bowl of mushroom udon with a soft egg.' },
       { src: '/albums/food/family-dinner', alt: 'A table crowded with shared dishes: steamed buns, dumplings, noodles and greens.' },
-      { src: '/albums/food/steak-dinner', alt: 'A seared steak with roasted tomatoes and mushrooms on a white plate.' },
       { src: '/albums/food/bagel-coffee', alt: 'A bagel sandwich, a pastry and a black coffee on a wooden table.' },
     ],
   },

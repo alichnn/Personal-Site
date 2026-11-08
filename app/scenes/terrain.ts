@@ -181,20 +181,15 @@ export class Terrain implements WorldModule {
     const greens = ['#5f9b37', '#6fae3f', '#80bb48', '#94c24f', '#a9c856', '#5a8f3a'].map((h) => new Color(h))
     const c = new Color()
     const gauss = () => (r() + r() + r() - 1.5) / 1.5
-    // natural clumps scattered over the open meadow fill the sparse stretches
-    const clumps = Array.from({ length: 320 }, () => [range(r, -95, 95), range(r, -365, -150)] as const)
     let placed = 0
     while (placed < count) {
       const k = r()
-      if (k < 0.24) p.set(SIGN.x - 2 + gauss() * 20, 0, SIGN.z + 4 + gauss() * 18)
-      else if (k < 0.44) {
+      if (k < 0.32) p.set(SIGN.x - 2 + gauss() * 20, 0, SIGN.z + 4 + gauss() * 18)
+      else if (k < 0.6) {
         const a = r() * Math.PI * 2, d = POND_R + 0.2 + Math.pow(r(), 1.6) * 22
         p.set(POND.x + Math.cos(a) * d, 0, POND.z + Math.sin(a) * d)
-      } else if (k < 0.54) p.set(FIRE.x + gauss() * 12, 0, FIRE.z + gauss() * 10)
-      else if (k < 0.72) {
-        const [cx, cz] = clumps[Math.floor(r() * clumps.length)]!
-        p.set(cx + gauss() * 2.2, 0, cz + gauss() * 2.2)
-      } else p.set(range(r, -100, 100), 0, range(r, -370, -150))
+      } else if (k < 0.72) p.set(FIRE.x + gauss() * 12, 0, FIRE.z + gauss() * 10)
+      else p.set(range(r, -80, 80), 0, range(r, -350, -160))
       const pr = Math.hypot(p.x - POND.x, p.z - POND.z)
       if (pr < POND_R + 0.2) continue
       if (Math.hypot(p.x - FIRE.x, p.z - FIRE.z) < 2.6) continue
@@ -205,10 +200,8 @@ export class Terrain implements WorldModule {
       q.setFromAxisAngle(up, r() * Math.PI)
       // short grass at the foot of the sign so the squirrels show
       const nearSign = Math.hypot(p.x - SIGN.x, p.z - SIGN.z) < 3.2 ? 0.4 : 1
-      // blades further from the paths are a little fuller, so the open ground reads as grass
-      const far = Math.min(1, Math.hypot(p.x - SIGN.x, p.z - (SIGN.z - 40)) / 70)
-      const h = range(r, 0.45, 1.05) * (pr < POND_R + 3 ? 1.3 : 1) * nearSign * (1 + far * 0.35)
-      s.set(range(r, 0.8, 1.3) * (1 + far * 0.9), h, 1)
+      const h = range(r, 0.45, 1.05) * (pr < POND_R + 3 ? 1.3 : 1) * nearSign
+      s.set(range(r, 0.8, 1.3), h, 1)
       mesh.setMatrixAt(placed, m.compose(p, q, s))
       c.copy(greens[Math.floor(r() * greens.length)]!)
       mesh.setColorAt(placed, c)

@@ -16,12 +16,12 @@ import { mergeGeometries, mergeVertices } from 'three/examples/jsm/utils/BufferG
 import { G } from './state'
 import { TOON_BANDS } from './glsl'
 
-// Chunky, toon-shaded 3D lettering (Fredoka SemiBold, extruded), with an inverted-hull outline
+// Chunky, toon-shaded 3D lettering (Redaction 50 Bold, extruded), with an inverted-hull outline
 // and a per-glyph reveal that scrubs with scroll.
 
 let fontPromise: Promise<Font> | null = null
 export function loadFont() {
-  fontPromise ??= fetch('/fonts/fredoka.json')
+  fontPromise ??= fetch('/fonts/redaction-50.json')
     .then((r) => r.json())
     .then((json) => new Font(json))
   return fontPromise

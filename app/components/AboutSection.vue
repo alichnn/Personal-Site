@@ -91,7 +91,7 @@ function trapTab(e: KeyboardEvent) {
     <div ref="inner" class="about-inner">
       <!-- the 3D lettering floats in the firelight here (scenes/words.ts) -->
       <div class="about-copy">
-        <h2 class="ghost">About me</h2>
+        <h2 class="ghost headline">About me</h2>
         <p class="ghost">{{ about }}</p>
       </div>
       <div
@@ -158,7 +158,7 @@ function trapTab(e: KeyboardEvent) {
 }
 .about-copy p {
   margin: 0;
-  font-size: clamp(1.05rem, 1.8vw, 1.3rem);
+  font-size: clamp(1.2rem, 1.8vw, 1.35rem);
   line-height: 1.35;
 }
 .albums {

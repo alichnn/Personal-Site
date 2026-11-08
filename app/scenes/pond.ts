@@ -426,7 +426,7 @@ export class Pond implements WorldModule {
       w.rig.sample(wp, o.pos, o.look)
       // drift a little toward the pad and look at it
       o.pos.x += (this.focusLook.x - o.pos.x) * 0.08
-      o.look.lerp(this.v.copy(this.focusLook).setY(this.focusLook.y + 1.1), 0.6)
+      o.look.lerp(this.v.copy(this.focusLook).setY(this.focusLook.y + 1.6), 0.45)
       o.weight = 0.7 * Math.min(1, total) * (1 - 0.6 * w.rig.narrow)
     }
 

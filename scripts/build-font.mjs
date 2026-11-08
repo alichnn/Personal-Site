@@ -1,12 +1,12 @@
-// Converts the subset Fredoka TTF into three.js typeface JSON (public/fonts/fredoka.json),
-// so the browser can build 3D lettering without shipping a font parser.
+// Converts Redaction 50 Bold into three.js typeface JSON (public/fonts/redaction-50.json),
+// so the browser can build the 3D headline lettering without shipping a font parser.
 // Same conversion as three's TTFLoader, using the npm build of opentype.js.
 import { readFile, writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import opentype from 'opentype.js'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
-const ttf = await readFile(`${root}assets-fonts/Fredoka-SemiBold-latin.ttf`)
+const ttf = await readFile(`${root}assets-fonts/redaction-50-latin-700-normal.woff`)
 const font = opentype.parse(ttf.buffer.slice(ttf.byteOffset, ttf.byteOffset + ttf.byteLength))
 
 const round = Math.round
@@ -28,7 +28,7 @@ for (const unicode of Object.keys(map)) {
 
 const json = {
   glyphs,
-  familyName: 'Fredoka SemiBold',
+  familyName: 'Redaction 50 Bold',
   ascender: round(font.ascender * scale),
   descender: round(font.descender * scale),
   underlinePosition: font.tables.post.underlinePosition,
@@ -36,5 +36,5 @@ const json = {
   boundingBox: { xMin: font.tables.head.xMin, xMax: font.tables.head.xMax, yMin: font.tables.head.yMin, yMax: font.tables.head.yMax },
   resolution: 1000,
 }
-await writeFile(`${root}public/fonts/fredoka.json`, JSON.stringify(json))
+await writeFile(`${root}public/fonts/redaction-50.json`, JSON.stringify(json))
 console.log('glyphs:', Object.keys(glyphs).length)

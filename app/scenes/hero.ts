@@ -8,6 +8,7 @@ import {
   PlaneGeometry,
   SRGBColorSpace,
   TextureLoader,
+  Vector2,
   Vector3,
 } from 'three'
 import type { World, WorldModule } from '../core/world'
@@ -25,13 +26,18 @@ export class Hero implements WorldModule {
   private rigGroup = new Group()
   private anchor = new Vector3()
   private scale = 1
+  /** Outer frame size before scaling. */
+  private size = new Vector2(2.32, 3.32)
 
   async build() {
     const tex = await new TextureLoader().loadAsync(heroCopy.photo.src)
     tex.colorSpace = SRGBColorSpace
     tex.anisotropy = 4
 
-    const W = 2, H = 3, B = 0.16
+    // the frame takes the photo's own proportions
+    const img = tex.image as { width: number; height: number }
+    const W = 2, H = (W * img.height) / img.width, B = 0.16
+    this.size.set(W + 2 * B, H + 2 * B)
     const wood = toon('#f1dfc0', { rim: 0.8 })
     const frame = new Group()
     const bars: [number, number, number, number][] = [
@@ -85,10 +91,10 @@ export class Hero implements WorldModule {
     if (wide) {
       this.anchor.addScaledVector(right, hw * 0.4)
       this.anchor.y = SKY_Y + hh * 0.02
-      this.scale = (hh * 0.95) / 3.6
+      this.scale = (hh * 0.95) / (this.size.y + 0.6)
     } else {
       this.anchor.y = SKY_Y - hh * 0.4
-      this.scale = Math.min((hh * 0.62) / 3.6, (hw * 0.86) / 2.4)
+      this.scale = Math.min((hh * 0.62) / (this.size.y + 0.6), (hw * 0.86) / (this.size.x + 0.08))
     }
     this.rigGroup.position.copy(this.anchor)
     this.rigGroup.lookAt(restPos)

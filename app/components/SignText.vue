@@ -18,7 +18,7 @@ import { earth } from '~/data/content'
   right: 0;
   width: min(820px, 90vw);
   margin: 0 auto;
-  font-size: clamp(1.2rem, 2.4vw, 1.85rem);
+  font-size: clamp(1.4rem, 2.4vw, 1.85rem);
   line-height: 1.22;
   text-align: center;
 }

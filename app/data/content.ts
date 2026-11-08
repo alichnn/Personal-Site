@@ -2,7 +2,7 @@
 
 export const hero = {
   greeting: 'Hey, I’m Alice',
-  photo: { src: '/images/alice-800.webp', alt: 'Alice standing at a wooden railing at dusk, trees behind her.' },
+  photo: { src: '/images/alice-800.webp', width: 800, height: 1027, alt: 'Alice at a wooden railing at dusk, tucking her hair back, trees behind her.' },
 }
 
 export const people = 'I spend most of my time thinking about people.'
@@ -20,9 +20,9 @@ export interface Role {
 
 /** One lily pad per role. Add or remove entries freely; the pond adapts. */
 export const roles: Role[] = [
-  { role: '[Role]', company: '[Company]', line: 'Fraud mitigation. One-liner to come.' },
-  { role: '[Role]', company: '[Company]', line: 'Product strategy. One-liner to come.' },
-  { role: '[Role]', company: '[Company]', line: 'Risk. One-liner to come.' },
+  { role: 'Data Engineer', company: '@Blumont Annuity', line: 'Insurance' },
+  { role: 'Product Strategy', company: '@RBC', line: 'Credit Cards' },
+  { role: 'Operations Analyst', company: '@CIBC', line: 'Fraud Mitigation' },
 ]
 
 export const about =

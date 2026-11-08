@@ -16,9 +16,9 @@ ui.reduced = matchMedia('(prefers-reduced-motion: reduce)').matches || new URLSe
       <main>
         <TextBlock :range="T.hero" class="hero" label="Introduction" passive>
           <div class="hero-copy">
-            <h1 class="hero-title ghost">{{ hero.greeting }}</h1>
+            <h1 class="hero-title ghost headline">{{ hero.greeting }}</h1>
           </div>
-          <img class="sr-only" :src="hero.photo.src" :alt="hero.photo.alt" width="800" height="1200">
+          <img class="sr-only" :src="hero.photo.src" :alt="hero.photo.alt" :width="hero.photo.width" :height="hero.photo.height">
         </TextBlock>
 
         <TextBlock :range="T.people" passive>
@@ -52,7 +52,7 @@ ui.reduced = matchMedia('(prefers-reduced-motion: reduce)').matches || new URLSe
 .hero-title {
   margin: 0;
   font-size: clamp(2.6rem, 7vw, 5.6rem);
-  line-height: 1.05;
+  line-height: 1.22;
   text-align: left;
   max-width: 44vw;
 }

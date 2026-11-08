@@ -1,12 +1,20 @@
+/* Redaction (OFL): 50 for the 3D headlines, the lighter-textured 20 for everything else. */
 @font-face {
-  font-family: 'Fredoka';
-  font-weight: 600;
+  font-family: 'Redaction 50';
+  font-weight: 700;
   font-display: swap;
-  src: url('/fonts/fredoka-semibold.woff2') format('woff2');
+  src: url('/fonts/redaction-50-700.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Redaction 20';
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/redaction-20-400.woff2') format('woff2');
 }
 
 :root {
-  --font-display: 'Fredoka', ui-rounded, system-ui, sans-serif;
+  --font-display: 'Redaction 20', ui-serif, Georgia, serif;
+  --font-headline: 'Redaction 50', ui-serif, Georgia, serif;
   --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-carved: ui-serif, 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
   --ink: #ffffff;
@@ -138,11 +146,15 @@ html.lenis body {
  */
 .ghost {
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 400;
   color: transparent !important;
   text-shadow: none !important;
   background: none !important;
   user-select: none;
+}
+.ghost.headline {
+  font-family: var(--font-headline);
+  font-weight: 700;
 }
 
 .lede {
