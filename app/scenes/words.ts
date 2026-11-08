@@ -1,0 +1,248 @@
+import { Group, MathUtils, Matrix4, Quaternion, Vector3 } from 'three'
+import type { World, WorldModule } from '../core/world'
+import { Lettering, loadFont, type LetteringStyle } from '../core/lettering'
+import { state } from '../core/state'
+import { T, roleSlot, smooth, type Range4 } from '../core/timeline'
+import { roles } from '../data/content'
+import type { Font } from 'three/examples/jsm/loaders/FontLoader.js'
+
+// All story text, as floating 3D lettering in the world.
+//
+// Each line still exists as real HTML (for screen readers, search and keyboard focus) in the
+// same responsive layout, just invisible ("ghost" text). This module measures where each ghost
+// sits on screen at its section's resting camera pose and puts the 3D lettering at that spot in
+// the world, so CSS decides the layout and the letters live in the scene.
+
+const UP = new Vector3(0, 1, 0)
+
+interface Pose {
+  pos: Vector3
+  quat: Quaternion
+  fwd: Vector3
+  right: Vector3
+  up: Vector3
+  fov: number
+}
+
+interface GhostItem {
+  sel: string
+  /** Progress where the camera rests while this text holds. */
+  rest: number
+  /** Distance from the resting camera, in world units. */
+  dist: number
+  range: Range4
+  style: LetteringStyle
+  /** Gentle float, in world units. */
+  bob?: number
+  letter?: Lettering
+  anchor?: Vector3
+  phase: number
+}
+
+const sky = (color: string, outline: string, extra: Partial<LetteringStyle> = {}): LetteringStyle => ({ color, outline, lit: 0.45, outlineWidth: 0.075, depth: 0.26, ...extra })
+
+const GHOSTS: GhostItem[] = [
+  // closer than the photo frame (16) so the frame's little cloud never hides the letters
+  { sel: '.hero-title', rest: 0.16, dist: 12, range: T.hero, style: sky('#fffdf6', '#1b3c98'), bob: 0.12, phase: 0 },
+  { sel: '.people', rest: 0.235, dist: 24, range: T.people, style: sky('#fff4ee', '#2a2370'), bob: 0.15, phase: 1 },
+  { sel: '.goal .lede', rest: 0.375, dist: 26, range: T.goal, style: sky('#bfcaf0', '#0b1540', { emissive: '#8ea6ff', emissiveIntensity: 0.07, lit: 0.1 }), bob: 0.15, phase: 2 },
+  { sel: '.earth-copy', rest: 0.56, dist: 9, range: T.sign, style: { color: '#6a3a17', outline: '#fff3da', lit: 0.5, outlineWidth: 0.09, depth: 0.3 }, bob: 0.04, phase: 3 },
+  { sel: '.work-title', rest: 0.74, dist: 14, range: T.work, style: sky('#ffffff', '#0b3b3d', { lit: 0.3 }), bob: 0.05, phase: 4 },
+  { sel: '.about-copy h2', rest: 0.91, dist: 7, range: T.about, style: { color: '#f0d3ad', outline: '#2a1205', lit: 0.25, outlineWidth: 0.08, depth: 0.26 }, bob: 0.02, phase: 5 },
+  { sel: '.about-copy p', rest: 0.91, dist: 7, range: T.about, style: { color: '#e9d2b2', outline: '#2a1205', lit: 0.2, outlineWidth: 0.1, depth: 0.22 }, bob: 0.02, phase: 6 },
+]
+
+const ROLE_STYLE = { color: '#ffffff', outline: '#0a3436', lit: 0.3, outlineWidth: 0.09, depth: 0.24 }
+const COMPANY_STYLE = { ...ROLE_STYLE, color: '#aaf1e3' }
+// kept just under the night bloom threshold so it stays crisp; hover pushes it over into a glow
+const CONTACT_STYLE: LetteringStyle = { color: '#aebbe6', outline: '#0d1a4a', emissive: '#9fb4ff', emissiveIntensity: 0.05, lit: 0, outlineWidth: 0.09, depth: 0.2 }
+
+export class Words implements WorldModule {
+  range: [number, number] = [0, 1]
+  group = new Group()
+  built = false
+  /** 0..1 hover glow per contact link (set by the HTML links). */
+  contactGlow: number[] = []
+  private font!: Font
+  private roleLetters: Lettering[][] = []
+  private contactLetters: Lettering[] = []
+  private contactLabels: HTMLElement[] = []
+  private resizeTimer: ReturnType<typeof setTimeout> | null = null
+  private m = new Matrix4()
+  private tmp = new Vector3()
+  private roleQuat = new Quaternion()
+
+  async build(w: World) {
+    this.font = await loadFont()
+    // the HTML ghost layout uses the same font; wait for it so the measurements match
+    await document.fonts?.load('600 16px Fredoka').catch(() => {})
+    this.layoutAll(w)
+  }
+
+  /** The camera's resting pose at progress p (without drift). */
+  private pose(w: World, p: number): Pose {
+    const pos = new Vector3(), look = new Vector3()
+    const { fov } = w.rig.sample(p, pos, look)
+    const quat = new Quaternion().setFromRotationMatrix(this.m.lookAt(pos, look, UP))
+    const fwd = look.clone().sub(pos).normalize()
+    const right = new Vector3().crossVectors(fwd, UP).normalize()
+    const up = new Vector3().crossVectors(right, fwd)
+    return { pos, quat, fwd, right, up, fov }
+  }
+
+  /** World units per CSS pixel at a distance in front of a camera with this fov. */
+  private pxToWorld(fov: number, dist: number) {
+    return (2 * dist * Math.tan(MathUtils.degToRad(fov / 2))) / innerHeight
+  }
+
+  private rolesReady = false
+
+  private layoutAll(w: World) {
+    for (const g of GHOSTS) this.layoutGhost(w, g)
+    if (w.pond.built) {
+      this.layoutRoles(w)
+      this.rolesReady = true
+    }
+    this.layoutContacts(w)
+  }
+
+  private layoutGhost(w: World, g: GhostItem) {
+    const el = document.querySelector<HTMLElement>(g.sel)
+    if (!el) return
+    const block = el.closest<HTMLElement>('.block')
+    const r = el.getBoundingClientRect()
+    // undo the block's scrub transform: blocks are full-viewport boxes at the origin
+    const b = block?.getBoundingClientRect()
+    const x = r.left - (b?.left ?? 0), y = r.top - (b?.top ?? 0)
+    if (r.width < 1) return
+    const cs = getComputedStyle(el)
+    const pose = this.pose(w, g.rest)
+    const k = this.pxToWorld(pose.fov, g.dist)
+    const size = parseFloat(cs.fontSize) * k
+    const align = cs.textAlign === 'left' || cs.textAlign === 'start' ? 'left' : cs.textAlign === 'right' ? 'right' : 'center'
+    const layout = {
+      size,
+      maxWidth: r.width * k * 1.03,
+      lineHeight: (parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.2) / parseFloat(cs.fontSize),
+      align,
+      anchorX: align,
+      anchorY: 'top',
+    } as const
+    if (!g.letter) {
+      g.letter = new Lettering(this.font, el.textContent!.trim(), g.style, layout)
+      this.group.add(g.letter.group)
+    } else g.letter.layout(layout)
+
+    // put the block where its ghost sits on screen, at the chosen depth
+    const ax = align === 'left' ? x : align === 'right' ? x + r.width : x + r.width / 2
+    // the first line's cap top sits roughly half a line-gap below the box top
+    const capTop = y + (parseFloat(cs.lineHeight) - parseFloat(cs.fontSize) * 0.72) / 2
+    const nx = (ax / innerWidth) * 2 - 1
+    const ny = -((capTop / innerHeight) * 2 - 1)
+    const hh = g.dist * Math.tan(MathUtils.degToRad(pose.fov / 2))
+    const hw = hh * (innerWidth / innerHeight)
+    g.anchor = pose.pos.clone().addScaledVector(pose.fwd, g.dist).addScaledVector(pose.right, nx * hw).addScaledVector(pose.up, ny * hh)
+    g.letter.group.position.copy(g.anchor)
+    g.letter.group.quaternion.copy(pose.quat)
+  }
+
+  private layoutRoles(w: World) {
+    const pose = this.pose(w, 0.74)
+    this.roleQuat.copy(pose.quat)
+    roles.forEach((role, i) => {
+      const d = pose.pos.distanceTo(w.pond.padBase(w, i))
+      const k = this.pxToWorld(pose.fov, d)
+      const narrow = innerWidth < 640
+      const max = (narrow ? innerWidth * 0.8 : 440) * k
+      const specs: [string, LetteringStyle, number][] = [
+        [role.role, ROLE_STYLE, narrow ? 24 : 30],
+        [role.company, COMPANY_STYLE, narrow ? 19 : 22],
+        [role.line, { ...ROLE_STYLE, outlineWidth: 0.11 }, narrow ? 16 : 18],
+      ]
+      let lines = this.roleLetters[i]
+      if (!lines) {
+        lines = specs.map(([text, style, px]) => new Lettering(this.font, text, style, { size: px * k, maxWidth: max, anchorY: 'top' }))
+        lines.forEach((l) => this.group.add(l.group))
+        this.roleLetters[i] = lines
+      } else specs.forEach(([, , px], j) => lines![j]!.layout({ size: px * k, maxWidth: max, anchorY: 'top' }))
+      lines.forEach((l) => (l.group.userData.k = k))
+    })
+  }
+
+  private layoutContacts(w: World) {
+    this.contactLabels = [...document.querySelectorAll<HTMLElement>('.star-label')]
+    const k = this.pxToWorld(56, 30)
+    this.contactLabels.forEach((el, i) => {
+      const px = parseFloat(getComputedStyle(el).fontSize)
+      const layout = { size: px * k * 1.15 }
+      if (!this.contactLetters[i]) {
+        this.contactLetters[i] = new Lettering(this.font, el.textContent!.trim(), CONTACT_STYLE, layout)
+        this.group.add(this.contactLetters[i]!.group)
+        this.contactGlow[i] = 0
+      } else this.contactLetters[i]!.layout(layout)
+    })
+  }
+
+  resize(w: World) {
+    if (!this.built) return
+    if (this.resizeTimer) clearTimeout(this.resizeTimer)
+    this.resizeTimer = setTimeout(() => this.layoutAll(w), 220)
+  }
+
+  update(w: World) {
+    const p = state.p
+    if (!this.rolesReady && w.pond.built) {
+      this.layoutRoles(w)
+      this.rolesReady = true
+    }
+    const t = state.time
+    const motion = !state.reduced
+    for (const g of GHOSTS) {
+      if (!g.letter || !g.anchor) continue
+      const [a, b, c, d] = g.range
+      g.letter.setReveal(smooth(p, a, b), smooth(p, c, d), motion)
+      if (g.letter.group.visible && motion && g.bob) {
+        g.letter.group.position.copy(g.anchor)
+        g.letter.group.position.y += Math.sin(t * 0.7 + g.phase) * g.bob
+      }
+    }
+
+    // role lettering floats above each lily pad while that role is in focus
+    this.roleLetters.forEach((lines, i) => {
+      const f = w.pond.built ? w.pond.focus(i) : 0
+      const [a, b] = roleSlot(i, roles.length)
+      // before the slot's midpoint the role is arriving; after it, leaving
+      const arriving = p < (a + b) / 2
+      const base = w.pond.padAnchors[i]!
+      const k = lines[0]!.group.userData.k as number
+      let y = this.stackHeight(lines)
+      for (const l of lines) {
+        l.setReveal(arriving ? f : 1, arriving ? 0 : 1 - f, motion)
+        l.group.position.copy(base)
+        l.group.position.y += 0.5 + (motion ? Math.sin(t * 0.9 + i) * 0.05 : 0)
+        l.group.quaternion.copy(this.roleQuat)
+        l.group.translateY(y)
+        y -= l.height + 10 * k
+      }
+    })
+
+    // contact words sit beside their stars, facing the camera
+    const cam = w.camera
+    this.contactLetters.forEach((l, i) => {
+      const el = this.contactLabels[i]
+      l.setReveal(smooth(p, T.contact[0], T.contact[1]), 0, motion)
+      if (!el || !l.group.visible) return
+      const r = el.getBoundingClientRect()
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2
+      this.tmp.set((cx / innerWidth) * 2 - 1, -((cy / innerHeight) * 2 - 1), 0.5).unproject(cam).sub(cam.position).normalize()
+      l.group.position.copy(cam.position).addScaledVector(this.tmp, 30)
+      l.group.quaternion.copy(cam.quaternion)
+      l.glow = this.contactGlow[i] ?? 0
+    })
+  }
+
+  private stackHeight(lines: Lettering[]) {
+    const k = lines[0]!.group.userData.k as number
+    return lines.reduce((a, l) => a + l.height + 10 * k, 0)
+  }
+}

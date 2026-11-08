@@ -15,18 +15,18 @@ ui.reduced = matchMedia('(prefers-reduced-motion: reduce)').matches || new URLSe
       <ConstellationLines />
       <main>
         <TextBlock :range="T.hero" class="hero" label="Introduction" passive>
-          <div class="hero-copy scrim">
-            <h1 class="hero-title">{{ hero.greeting }}</h1>
+          <div class="hero-copy">
+            <h1 class="hero-title ghost">{{ hero.greeting }}</h1>
           </div>
           <img class="sr-only" :src="hero.photo.src" :alt="hero.photo.alt" width="800" height="1200">
         </TextBlock>
 
         <TextBlock :range="T.people" passive>
-          <p class="lede scrim people">{{ people }}</p>
+          <p class="lede ghost people">{{ people }}</p>
         </TextBlock>
 
         <TextBlock :range="T.goal" class="goal" passive>
-          <p class="lede scrim">{{ goal }}</p>
+          <p class="lede ghost">{{ goal }}</p>
         </TextBlock>
 
         <SignText />
@@ -48,28 +48,17 @@ ui.reduced = matchMedia('(prefers-reduced-motion: reduce)').matches || new URLSe
 }
 .hero-copy {
   margin-left: 6vw;
-  --scrim: rgba(7, 26, 78, 0.74);
-  --scrim-core: 62%;
-  --scrim-inset: -80% -24%;
 }
 .hero-title {
   margin: 0;
   font-size: clamp(2.6rem, 7vw, 5.6rem);
-  line-height: 1.02;
-  letter-spacing: -0.02em;
-  font-weight: 800;
+  line-height: 1.05;
   text-align: left;
-  text-shadow: 0 2px 3px rgba(5, 18, 60, 0.55), 0 0 30px rgba(5, 18, 60, 0.45);
-}
-.people {
-  --scrim: rgba(14, 18, 66, 0.66);
+  max-width: 44vw;
 }
 .goal {
   justify-content: flex-end;
   padding-bottom: max(14vh, 80px);
-}
-.goal .lede {
-  --scrim: rgba(2, 4, 20, 0.55);
 }
 
 @media (max-aspect-ratio: 1/1) {
@@ -83,10 +72,14 @@ ui.reduced = matchMedia('(prefers-reduced-motion: reduce)').matches || new URLSe
   }
   .hero-title {
     text-align: center;
+    max-width: 88vw;
   }
 }
 
 /* Without WebGL: a plain, readable page. */
+.no-webgl .ghost {
+  color: #fff !important;
+}
 .no-webgl body {
   background: #0b1030;
 }

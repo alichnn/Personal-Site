@@ -172,7 +172,8 @@ export class CameraRig {
     const t = state.time
     const idleTarget = state.reduced ? 0 : (state.idle > 0.35 ? 1 : 0.35) * (1 - 0.95 * state.holdCamera)
     this.driftAmt = damp(this.driftAmt, idleTarget, 1.1, dt)
-    const s = this.driftAmt * drift
+    // narrow screens see much less horizontally, so the same sway would push text off-screen
+    const s = this.driftAmt * drift * (1 - 0.65 * this.narrow)
     this.tPos.x += (Math.sin(t * 0.23) * 0.9 + Math.sin(t * 0.11 + 1.3) * 0.5) * s
     this.tPos.y += Math.sin(t * 0.19 + 0.7) * 0.45 * s
     this.tPos.z += Math.sin(t * 0.15 + 2.1) * 0.5 * s

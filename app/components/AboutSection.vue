@@ -89,9 +89,10 @@ function trapTab(e: KeyboardEvent) {
 <template>
   <TextBlock :range="T.about" label="About me" class="about">
     <div ref="inner" class="about-inner">
-      <div class="about-copy scrim">
-        <h2>About me</h2>
-        <p>{{ about }}</p>
+      <!-- the 3D lettering floats in the firelight here (scenes/words.ts) -->
+      <div class="about-copy">
+        <h2 class="ghost">About me</h2>
+        <p class="ghost">{{ about }}</p>
       </div>
       <div
         class="albums"
@@ -141,7 +142,7 @@ function trapTab(e: KeyboardEvent) {
   --fire: 0;
   display: flex;
   flex-direction: column;
-  gap: clamp(1.4rem, 4vh, 2.6rem);
+  gap: clamp(2rem, 6.5vh, 3.6rem);
   width: min(880px, 64vw);
   margin-left: 2vw;
 }
@@ -149,19 +150,16 @@ function trapTab(e: KeyboardEvent) {
   align-self: flex-start;
   max-width: 34rem;
   text-align: left;
-  color: #fff1de;
-  --scrim: rgba(10, 6, 4, 0.66);
 }
 .about-copy h2 {
   margin: 0 0 0.35rem;
   font-size: clamp(1.6rem, 3.4vw, 2.5rem);
   line-height: 1.1;
-  text-shadow: 0 0 calc(var(--fire) * 22px) rgba(255, 140, 60, 0.55), 0 1px 2px rgba(0, 0, 0, 0.7);
 }
 .about-copy p {
   margin: 0;
   font-size: clamp(1.05rem, 1.8vw, 1.3rem);
-  text-shadow: 0 0 calc(var(--fire) * 14px) rgba(255, 140, 60, 0.4), 0 1px 2px rgba(0, 0, 0, 0.75);
+  line-height: 1.35;
 }
 .albums {
   --card-w: clamp(150px, min(16vw, 30vh), 236px);

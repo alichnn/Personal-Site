@@ -20,14 +20,14 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js'
 import { FXAAPass } from 'three/examples/jsm/postprocessing/FXAAPass.js'
-import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer.js'
 import type Lenis from 'lenis'
 import { Atmosphere } from './atmosphere'
 import { CameraRig } from './camera'
 import { QUALITY, detectTier, lowerTier, type Quality } from './quality'
 import { createScroll } from './scroll'
 import { G, frameHooks, state, type Tier } from './state'
-import { SCROLL_SVH, compositions, damp } from './timeline'
+import { SCROLL_SVH, compositions, damp, storyFromScroll } from './timeline'
+import { scrollToProgress } from './scroll'
 import { groundHeight } from './layout'
 
 import { Sky } from '../scenes/sky'
@@ -40,6 +40,7 @@ import { Meadow } from '../scenes/meadow'
 import { Bird } from '../scenes/bird'
 import { Pond } from '../scenes/pond'
 import { Campfire } from '../scenes/campfire'
+import { Words } from '../scenes/words'
 
 export interface WorldModule {
   /** Progress range in which the module is visible and updated. */
@@ -56,7 +57,6 @@ export interface WorldModule {
 
 export interface WorldOptions {
   canvas: HTMLCanvasElement
-  cssLayer: HTMLElement
   fadeCanvas: HTMLCanvasElement
   reduced: boolean
   roleCount: number
@@ -101,8 +101,6 @@ export class World {
   readonly composer: EffectComposer
   readonly bloom: UnrealBloomPass
   readonly grade: ShaderPass
-  readonly css: CSS3DRenderer
-  readonly cssScene = new Scene()
   readonly lenis: Lenis
   quality: Quality
 
@@ -116,6 +114,7 @@ export class World {
   readonly bird = new Bird()
   readonly pond = new Pond()
   readonly campfire = new Campfire()
+  readonly words = new Words()
   readonly modules: WorldModule[]
 
   /** White exposure flash (0..1), set by the cloud burst. */
@@ -180,13 +179,11 @@ export class World {
     this.composer.addPass(new OutputPass())
     this.composer.addPass(new FXAAPass())
 
-    this.css = new CSS3DRenderer({ element: opts.cssLayer as HTMLDivElement })
-
     this.atmo = new Atmosphere(this.scene)
     this.rig = new CameraRig(this.camera)
     this.lenis = createScroll(opts.reduced)
 
-    this.modules = [this.sky, this.clouds, this.hero, this.night, this.seeds, this.terrain, this.meadow, this.bird, this.pond, this.campfire]
+    this.modules = [this.sky, this.clouds, this.hero, this.night, this.seeds, this.terrain, this.meadow, this.bird, this.pond, this.campfire, this.words]
     for (const m of this.modules) {
       m.group.visible = false
       this.scene.add(m.group)
@@ -199,7 +196,7 @@ export class World {
     addEventListener('pointerdown', this.onPointer, { passive: true })
     document.documentElement.addEventListener('pointerleave', this.onPointerLeave)
     world = this
-    if (import.meta.dev) (window as unknown as { __world: World }).__world = this
+    if (import.meta.dev) Object.assign(window, { __world: this, __goto: (p: number) => scrollToProgress(p, true) })
   }
 
   /** Loads the opening scenes, starts rendering, then streams the rest in the background. */
@@ -218,6 +215,7 @@ export class World {
     await this.buildModule(this.night)
     onLoadProgress(0.7)
     await this.buildModule(this.seeds)
+    await this.buildModule(this.words)
     onLoadProgress(1)
     // let the push into the clouds read as a beat, even on fast machines
     const minLoader = state.reduced ? 300 : 1400
@@ -308,7 +306,6 @@ export class World {
     this.composer.setSize(w, h)
     const s = this.quality.bloomScale * 2
     this.bloom.setSize(Math.round(w * dpr * s), Math.round(h * dpr * s))
-    this.css.setSize(w, h)
     this.camera.aspect = w / h
     this.rig.narrow = Math.min(1, Math.max(0, (1 - w / h) / 0.45))
     this.camera.updateProjectionMatrix()
@@ -367,7 +364,7 @@ export class World {
     G.uTime.value = state.time
 
     this.lenis.raf(now)
-    const p = this.lenis.limit > 0 ? Math.min(1, Math.max(0, this.lenis.scroll / this.lenis.limit)) : 0
+    const p = this.lenis.limit > 0 ? storyFromScroll(Math.min(1, Math.max(0, this.lenis.scroll / this.lenis.limit))) : 0
     const dp = p - this.lastP
     this.lastP = p
     state.speed = damp(state.speed, (dp * (SCROLL_SVH / 100)) / dt, 6, dt)
@@ -431,10 +428,6 @@ export class World {
     this.bloom.threshold = threshold
     this.grade.uniforms.uFlash!.value = this.flash
     this.composer.render()
-    if (this.meadow.built) {
-      this.meadow.syncCss()
-      this.css.render(this.cssScene, this.camera)
-    }
   }
 
   /** Reduced motion: freeze the current frame on a 2D canvas and fade it out over the new one. */

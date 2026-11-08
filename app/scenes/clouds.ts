@@ -43,13 +43,13 @@ export class Clouds implements WorldModule {
       spots.push({ pos: new Vector3(x, y, z), scale, core })
 
     // the thick bank the visitor starts inside (and the loader pushes into)
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 22; i++) {
       const a = r() * Math.PI * 2, d = range(r, 9, 60)
-      add(Math.cos(a) * d, SKY_Y + Math.sin(a) * d * 0.55, range(r, 470, 660), range(r, 1.6, 3), i < 18)
+      add(Math.cos(a) * d, SKY_Y + Math.sin(a) * d * 0.55, range(r, 470, 660), range(r, 1.6, 3), i < 14)
     }
     // layers the camera streams through
     // each layer leaves a gap for the camera, so blue sky flashes between the walls of white
-    for (const [li, wz] of [440, 380, 315, 250, 195].entries()) {
+    for (const [li, wz] of [400, 300, 205].entries()) {
       const gap = (li % 2 ? 1 : -1) * range(r, 4, 14)
       for (let i = 0; i < 7; i++) {
         let x = range(r, -80, 80)
@@ -60,7 +60,7 @@ export class Clouds implements WorldModule {
       if (li % 2 === 0) add(gap * -0.5, SKY_Y + range(r, -3, 3), wz, 1.6, true)
     }
     // the corridor walls on either side
-    for (let i = 0; i < 46; i++) {
+    for (let i = 0; i < 30; i++) {
       const side = r() < 0.5 ? -1 : 1
       add(side * range(r, 32, 140), SKY_Y + range(r, -50, 40), range(r, 140, 560), range(r, 1.5, 3.2))
     }
@@ -175,7 +175,7 @@ export class Clouds implements WorldModule {
 
     // thick white inside the opening bank and the walls
     const bank = smooth(z, 470, 540)
-    const layers = [440, 380, 315, 250, 195].reduce((acc, wz) => Math.max(acc, bell(z, wz + 16, wz + 4, wz - 4, wz - 16) * 0.55), 0)
+    const layers = [400, 300, 205].reduce((acc, wz) => Math.max(acc, bell(z, wz + 16, wz + 4, wz - 4, wz - 16) * 0.55), 0)
     this.wallFog = Math.max(bank, layers, through * 0.95)
   }
 }

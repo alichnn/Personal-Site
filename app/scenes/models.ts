@@ -10,7 +10,6 @@ import {
   Group,
   IcosahedronGeometry,
   Mesh,
-  Object3D,
   type ColorRepresentation,
 } from 'three'
 import { addOutline, outlineAll, toon } from '../core/toon'
@@ -81,28 +80,23 @@ export function makeSignpost() {
   const root = new Group()
   const r = rng(5)
   const wood = vc({ rim: 0.5 })
-  const post = new Mesh(paint(flat(new BoxGeometry(0.22, 2.9, 0.22)).translate(0, 1.45, -0.12), '#7b5130', 0.15, r), wood)
-  const board = new Mesh(paint(flat(new BoxGeometry(3.2, 1.6, 0.12, 4, 2, 1)), '#d8a565', 0.12, r), wood)
-  board.position.set(0, 2.0, 0)
-  board.rotation.z = 0.015
-  const arrowGeo = merge([
-    paint(flat(new BoxGeometry(1.0, 0.36, 0.1)).translate(0.1, 0, 0), '#c48a4e', 0.12, r),
-    paint(flat(new ConeGeometry(0.3, 0.36, 3)).rotateZ(Math.PI / 2).scale(1, 1, 0.33).translate(-0.58, 0, 0), '#c48a4e'),
+  const post = new Mesh(paint(flat(new BoxGeometry(0.2, 2.7, 0.2)).translate(0, 1.35, 0), '#7b5130', 0.15, r), wood)
+  root.add(post)
+  // two arrow boards pointing different ways down the meadow
+  const arrowGeo = (len: number, color: string) => merge([
+    paint(flat(new BoxGeometry(len, 0.4, 0.1)).translate(len / 2 - 0.15, 0, 0), color, 0.12, r),
+    paint(flat(new ConeGeometry(0.32, 0.4, 3)).rotateZ(-Math.PI / 2).scale(1, 1, 0.3).translate(len - 0.15 + 0.2, 0, 0), color),
   ])
-  const arrow = new Mesh(arrowGeo, wood)
-  arrow.position.set(-0.55, 3.05, -0.04)
-  arrow.rotation.z = -0.06
-  for (const m of [post, board, arrow]) {
-    m.castShadow = true
-    addOutline(m, 0.025, '#2b1a10')
-    root.add(m)
+  const arrows: [number, number, number, string][] = [[2.35, 0.25, 1.35, '#d8a565'], [1.9, -0.18, 1.15, '#c48a4e']]
+  for (const [y, yaw, len, color] of arrows) {
+    const arrow = new Mesh(arrowGeo(len, color), wood)
+    arrow.position.set(0, y, 0.12)
+    arrow.rotation.set(0, yaw > 0 ? 0.25 : Math.PI - 0.3, yaw * 0.2)
+    root.add(arrow)
   }
-  /** The front face of the board, where the carved text goes. */
-  const face = new Object3D()
-  face.position.set(0, 2.0, 0.065)
-  face.rotation.z = 0.015
-  root.add(face)
-  return { root, face, faceSize: [2.9, 1.34] as [number, number] }
+  root.traverse((o: any) => o.isMesh && (o.castShadow = true))
+  outlineAll(root, 0.025, '#2b1a10')
+  return { root }
 }
 
 // ---------------------------------------------------------------- bird

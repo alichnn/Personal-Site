@@ -18,8 +18,6 @@ export const POND_R = 22
 export const ISLET = new Vector3(-10.5, 0, -288)
 export const ISLET_TOP = WATER_Y + 0.62
 export const FIRE = new Vector3(14.5, 0, -266.5)
-/** Where the in-focus work lily pad drifts to. */
-export const PAD_FOCUS = new Vector3(1.2, 0, -279)
 
 /** Direction (from any viewpoint, since stars are at infinity) to the centre of the AC constellation. */
 export const CONSTELLATION_DIR = new Vector3(0, Math.sin((31 * Math.PI) / 180), -Math.cos((31 * Math.PI) / 180))

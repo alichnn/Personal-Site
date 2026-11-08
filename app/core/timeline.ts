@@ -21,6 +21,19 @@ export type Range4 = [number, number, number, number]
 /** Total scroll length, in small-viewport heights. */
 export const SCROLL_SVH = 3000
 
+/**
+ * The cloud intro (story 0 → INTRO_STORY) takes only the first INTRO_SCROLL of the page, so the
+ * fly-through is brisk and later sections get more room. Everything else is keyed on story progress.
+ */
+const INTRO_STORY = 0.118
+const INTRO_SCROLL = 0.07
+export function storyFromScroll(s: number) {
+  return s <= INTRO_SCROLL ? (s * INTRO_STORY) / INTRO_SCROLL : INTRO_STORY + ((s - INTRO_SCROLL) * (1 - INTRO_STORY)) / (1 - INTRO_SCROLL)
+}
+export function scrollFromStory(p: number) {
+  return p <= INTRO_STORY ? (p * INTRO_SCROLL) / INTRO_STORY : INTRO_SCROLL + ((p - INTRO_STORY) * (1 - INTRO_SCROLL)) / (1 - INTRO_STORY)
+}
+
 export const T = {
   intro: [0, 0.012] as [number, number], // scroll hint
   burst: 0.106, // camera breaks through the last cloud wall
@@ -34,7 +47,6 @@ export const T = {
   bird: [0.618, 0.664] as [number, number],
   work: [0.684, 0.696, 0.79, 0.8] as Range4,
   workRoles: [0.698, 0.778] as [number, number],
-  thread: [0.772, 0.782, 0.792, 0.8] as Range4,
   sunset: [0.796, 0.818] as [number, number],
   burn: [0.81, 0.832] as [number, number],
   gather: [0.828, 0.852] as [number, number],

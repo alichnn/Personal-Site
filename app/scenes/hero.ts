@@ -87,8 +87,8 @@ export class Hero implements WorldModule {
       this.anchor.y = SKY_Y + hh * 0.02
       this.scale = (hh * 0.95) / 3.6
     } else {
-      this.anchor.y = SKY_Y - hh * 0.3
-      this.scale = Math.min((hh * 0.75) / 3.6, (hw * 0.92) / 2.4)
+      this.anchor.y = SKY_Y - hh * 0.4
+      this.scale = Math.min((hh * 0.62) / 3.6, (hw * 0.86) / 2.4)
     }
     this.rigGroup.position.copy(this.anchor)
     this.rigGroup.lookAt(restPos)

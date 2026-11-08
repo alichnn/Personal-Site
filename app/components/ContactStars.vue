@@ -30,6 +30,8 @@ useFrame(() => {
 })
 
 function glow(e: Event, on: boolean) {
+  const i = links.value.indexOf(e.currentTarget as HTMLAnchorElement)
+  if (world && i >= 0) animate(world.words.contactGlow, { [i]: on ? 1.6 : 0, duration: 320, ease: 'outQuad' })
   const dot = (e.currentTarget as HTMLElement).querySelector('.star-dot')
   if (dot) animate(dot, { scale: on ? 1.7 : 1, opacity: on ? 1 : 0.85, duration: 320, ease: 'outQuad' })
 }
@@ -53,7 +55,7 @@ function glow(e: Event, on: boolean) {
           @blur="glow($event, false)"
         >
           <span class="star-dot" aria-hidden="true" />
-          <span class="star-label">{{ c.label }}</span>
+          <span class="star-label ghost">{{ c.label }}</span>
         </a>
       </li>
     </ul>
@@ -91,14 +93,9 @@ function glow(e: Event, on: boolean) {
   position: absolute;
   top: -0.8em;
   white-space: nowrap;
-  font-size: clamp(1rem, 1.8vw, 1.2rem);
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
   padding: 0.25rem 0.6rem;
   border-radius: 999px;
-  background: rgba(6, 10, 30, 0.6);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
-  transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 .star-link.right .star-label {
   left: 22px;
@@ -115,11 +112,6 @@ function glow(e: Event, on: boolean) {
     top: 16px;
     transform: translateX(-50%);
   }
-}
-.star-link:hover .star-label,
-.star-link:focus-visible .star-label {
-  background: rgba(20, 30, 80, 0.85);
-  box-shadow: 0 0 18px rgba(170, 200, 255, 0.55);
 }
 .star-link:focus-visible .star-label {
   outline: 3px solid var(--focus);

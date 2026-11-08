@@ -1,14 +1,9 @@
 import { Group, Vector3 } from 'three'
-import { CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRenderer.js'
 import type { World, WorldModule } from '../core/world'
 import { G, state } from '../core/state'
 import { SIGN, groundHeight } from '../core/layout'
 import { rng, range } from '../core/util'
-import { earth } from '../data/content'
 import { makeSignpost, makeSquirrel, makeSunflower } from './models'
-
-/** Pixel width of the carved-text element; scaled down onto the board so it stays crisp. */
-const SIGN_PX = 1100
 
 interface Flower { root: Group; head: Group; phase: number; baseYaw: number }
 interface Squirrel { parts: ReturnType<typeof makeSquirrel>; phase: number; nextLook: number; lookUntil: number; flickAt: number; lastFlick: number }
@@ -17,10 +12,6 @@ export class Meadow implements WorldModule {
   range: [number, number] = [0.4, 0.7]
   group = new Group()
   built = false
-  signVisible = false
-  /** The HTML paragraph projected onto the sign (aria-hidden; the text layer has the readable copy). */
-  signEl!: HTMLElement
-  private css!: CSS3DObject
   private flowers: Flower[] = []
   private squirrels: Squirrel[] = []
 
@@ -32,29 +23,6 @@ export class Meadow implements WorldModule {
     w.rig.sample(0.55, camPos, look)
     sign.root.rotation.y = Math.atan2(camPos.x - SIGN.x, camPos.z - SIGN.z) - 0.12
     this.group.add(sign.root)
-    this.group.updateMatrixWorld(true)
-
-    // carved text: real HTML, positioned on the board with CSS 3D transforms
-    const el = document.createElement('div')
-    el.className = 'sign-text'
-    el.setAttribute('aria-hidden', 'true')
-    const p = document.createElement('p')
-    for (const [i, word] of earth.split(' ').entries()) {
-      const span = document.createElement('span')
-      span.className = 'sign-word'
-      span.textContent = word
-      p.append(span, i < earth.split(' ').length - 1 ? ' ' : '')
-    }
-    el.append(p)
-    el.style.width = `${SIGN_PX}px`
-    el.style.height = `${Math.round((SIGN_PX * sign.faceSize[1]) / sign.faceSize[0])}px`
-    this.signEl = el
-    this.css = new CSS3DObject(el)
-    sign.face.getWorldPosition(this.css.position)
-    sign.face.getWorldQuaternion(this.css.quaternion)
-    this.css.scale.setScalar(sign.faceSize[0] / SIGN_PX)
-    this.css.visible = false
-    w.cssScene.add(this.css)
 
     // sunflowers: behind and to the right of the sign, a few to the left
     const r = rng(12)
@@ -86,16 +54,10 @@ export class Meadow implements WorldModule {
     }
   }
 
-  /** Called by the world every frame, so the sign text hides even when this module is skipped. */
-  syncCss() {
-    this.css.visible = this.group.visible && this.signVisible
-  }
-
   update() {
     const t = state.time
     const motion = state.reduced ? 0 : 1
     const gust = 1 + G.uGust.value * 1.5
-    this.signVisible = state.wp > 0.47 && state.wp < 0.635
 
     for (const f of this.flowers) {
       // heavier, slower rhythm than the grass

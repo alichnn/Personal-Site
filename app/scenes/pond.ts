@@ -20,7 +20,7 @@ import {
 import type { World, WorldModule } from '../core/world'
 import type { Quality } from '../core/quality'
 import { G, state } from '../core/state'
-import { FIRE, ISLET, ISLET_TOP, PAD_FOCUS, POND, POND_R, WATER_Y } from '../core/layout'
+import { FIRE, ISLET, ISLET_TOP, POND, POND_R, WATER_Y } from '../core/layout'
 import { NOISE } from '../core/glsl'
 import { T, bell, roleSlot, smooth } from '../core/timeline'
 import { flat, paint, rng, range } from '../core/util'
@@ -105,7 +105,7 @@ void main() {
   // toon sun glint
   vec3 R = reflect(-normalize(uSunDir), N);
   // broken into sparkles so it reads as light on ripples, not a patch
-  float spec = pow(max(dot(R, V), 0.0), 300.0) * step(0.62, vnoise(vWorld.xz * 2.6 + vec2(t * 0.7, -t * 0.5)));
+  float spec = pow(max(dot(R, V), 0.0), 300.0) * step(0.78, vnoise(vWorld.xz * 7.0 + vec2(t * 0.9, -t * 0.6)));
   col += mix(uSunColor, vec3(1.0), 0.5) * step(0.5, spec) * 0.9;
 
   // the sunset catches the water
@@ -171,7 +171,7 @@ export class Pond implements WorldModule {
   private q = new Quaternion()
   private s = new Vector3()
   private v = new Vector3()
-  private right = new Vector3()
+  private focusLook = new Vector3()
 
   build(w: World) {
     const r = rng(88)
@@ -227,8 +227,9 @@ export class Pond implements WorldModule {
         const a = r() * Math.PI * 2, d = range(r, 4, POND_R - 3)
         x = POND.x + Math.cos(a) * d
         z = POND.z + Math.sin(a) * d
-        // keep the work lane and the islet clear
-        if (Math.abs(z - PAD_FOCUS.z) > 3.5 && Math.hypot(x - ISLET.x, z - ISLET.z) > 2.5) break
+        // keep the work pads' lanes and the islet clear
+        const clear = this.lanes(w).every((l) => Math.hypot(x - l.x, z - l.z) > 3.6)
+        if (clear && Math.hypot(x - ISLET.x, z - ISLET.z) > 2.5) break
       }
       const g = new Group()
       const pad = new Mesh(lilyPadGeometry(range(r, 0.6, 1.15), 500 + i), padMat)
@@ -277,11 +278,32 @@ export class Pond implements WorldModule {
     }
     this.group.add(this.flames)
     this.buildEmbers(r)
+  }
 
-    // the right vector of the pond view, for the pads' drift
+  private laneCache: Vector3[] | null = null
+  /**
+   * Each work pad keeps its own lane at a different depth from the camera, alternating left and
+   * right, so the pads never drift into each other however many roles there are.
+   */
+  lanes(w: World) {
+    if (this.laneCache) return this.laneCache
     const cam = new Vector3(), look = new Vector3()
     w.rig.sample(0.74, cam, look)
-    this.right.subVectors(look, cam).setY(0).normalize().cross(new Vector3(0, 1, 0))
+    const fwd = look.sub(cam).setY(0).normalize()
+    const right = new Vector3().crossVectors(fwd, new Vector3(0, 1, 0))
+    const n = roles.length
+    // tighter lanes on narrow screens so pads (and their lettering) stay in view
+    const side = [-3.4, 3.0, -1.4, 3.8, -3.0].map((x) => x * (1 - 0.7 * w.rig.narrow))
+    this.laneCache = roles.map((_, i) => {
+      const d = 11.5 + (n > 1 ? i / (n - 1) : 0.5) * 15
+      return new Vector3(cam.x, WATER_Y + 0.03, cam.z).addScaledVector(fwd, d).addScaledVector(right, side[i % side.length]!)
+    })
+    return this.laneCache
+  }
+
+  /** Resting position of role i's pad. */
+  padBase(w: World, i: number) {
+    return this.lanes(w)[i]!
   }
 
   private buildEmbers(r: () => number) {
@@ -342,6 +364,7 @@ export class Pond implements WorldModule {
 
   resize() {
     this.emberMat.uniforms.uPx!.value = Math.min(devicePixelRatio || 1, 2)
+    this.laneCache = null
   }
 
   update(w: World) {
@@ -380,20 +403,32 @@ export class Pond implements WorldModule {
       this.flames.instanceMatrix.needsUpdate = true
     }
 
-    // the work pads drift across the view, one passing through focus at a time
-    const n = roles.length
+    // the work pads idle in their own lanes; the camera eases toward whichever is in focus
+    let total = 0
+    this.focusLook.set(0, 0, 0)
     roles.forEach((_, i) => {
-      const [a, b] = roleSlot(i, n)
-      const x = (wp - a) / (b - a)
-      const xc = Math.min(1.8, Math.max(-0.8, x))
-      const off = (xc - 0.5) * 1.6 + (xc < 0 ? xc * 15 : xc > 1 ? (xc - 1) * 15 : 0)
+      const lane = this.lanes(w)[i]!
       const g = this.workPads[i]!
-      g.position.copy(PAD_FOCUS).addScaledVector(this.right, off)
-      g.position.z += Math.sin(i * 2.1) * 0.8
-      g.position.y = WATER_Y + 0.03 + Math.sin(t * 1.1 + i) * 0.02 * motion
+      g.position.set(
+        lane.x + Math.sin(t * 0.12 + i * 2) * 0.45 * motion,
+        lane.y + Math.sin(t * 1.1 + i) * 0.02 * motion,
+        lane.z + Math.cos(t * 0.1 + i * 2) * 0.35 * motion,
+      )
       g.rotation.y = t * 0.05 * motion + i
       this.padAnchors[i]!.copy(g.position).add(this.v.set(0, 0.35, 0))
+      const f = this.focus(i)
+      total += f
+      this.focusLook.addScaledVector(lane, f)
     })
+    if (total > 0.001 && !state.reduced) {
+      const o = w.rig.override
+      this.focusLook.divideScalar(total)
+      w.rig.sample(wp, o.pos, o.look)
+      // drift a little toward the pad and look at it
+      o.pos.x += (this.focusLook.x - o.pos.x) * 0.08
+      o.look.lerp(this.v.copy(this.focusLook).setY(this.focusLook.y + 1.1), 0.6)
+      o.weight = 0.7 * Math.min(1, total) * (1 - 0.6 * w.rig.narrow)
+    }
 
     for (const p of this.decor) {
       p.mesh.position.set(p.base.x + Math.sin(t * 0.13 + p.phase) * 0.3 * motion, p.base.y + Math.sin(t * 1.3 + p.phase) * 0.015 * motion, p.base.z)

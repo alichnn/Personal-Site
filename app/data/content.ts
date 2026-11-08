@@ -25,8 +25,6 @@ export const roles: Role[] = [
   { role: '[Role]', company: '[Company]', line: 'Risk. One-liner to come.' },
 ]
 
-export const thread = 'The common thread: human intention and desire.'
-
 export const about =
   'Math/BBA at the University of Waterloo and Wilfrid Laurier University. From Markham, Ontario.'
 

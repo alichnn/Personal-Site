@@ -51,5 +51,10 @@ individual quality settings.
   background streaming of later scenes, the quality probe and watchdog, and the reduced-motion crossfade.
 - `app/scenes/*`: one module per part of the world. Each has a progress `range`, a `build()`
   and an `update()`.
-- `app/components/*`: the HTML layer. All text is real DOM, scrubbed by scroll with anime.js.
+- `app/scenes/words.ts` + `app/core/lettering.ts`: all story text as floating, toon-shaded 3D
+  lettering (Fredoka). Each line also exists as invisible "ghost" HTML in the same layout, for
+  screen readers, search and keyboard focus; the module measures each ghost's box at its section's
+  resting camera pose and places the 3D letters there. To restyle a line, edit its CSS (size,
+  position, wrap width) and the 3D text follows.
+- `app/components/*`: the HTML layer (ghost text, album cards, contact links, sound toggle).
 - `app/core/audio.ts`: the ambient soundscape, synthesised with Web Audio (no audio files).

@@ -1,4 +1,12 @@
+@font-face {
+  font-family: 'Fredoka';
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/fredoka-semibold.woff2') format('woff2');
+}
+
 :root {
+  --font-display: 'Fredoka', ui-rounded, system-ui, sans-serif;
   --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-carved: ui-serif, 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
   --ink: #ffffff;
@@ -124,18 +132,17 @@ html.lenis body {
   pointer-events: none;
 }
 
-/* Legibility: a soft radial scrim sits behind every block's text. */
-.scrim {
-  position: relative;
-  isolation: isolate;
-}
-.scrim::before {
-  content: '';
-  position: absolute;
-  inset: var(--scrim-inset, -55% -28%);
-  z-index: -1;
-  background: radial-gradient(closest-side, var(--scrim, rgba(6, 18, 52, 0.62)) 0%, var(--scrim, rgba(6, 18, 52, 0.62)) var(--scrim-core, 45%), transparent 100%);
-  pointer-events: none;
+/*
+ * Ghost text: the real, accessible HTML for each line, laid out exactly where its 3D lettering
+ * floats in the world (scenes/words.ts measures these boxes), but not painted itself.
+ */
+.ghost {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: transparent !important;
+  text-shadow: none !important;
+  background: none !important;
+  user-select: none;
 }
 
 .lede {
@@ -144,33 +151,6 @@ html.lenis body {
   font-size: clamp(1.6rem, 4.2vw, 3rem);
   font-weight: 600;
   line-height: 1.18;
-  letter-spacing: -0.01em;
-  text-wrap: balance;
-  text-shadow: 0 1px 2px rgba(4, 10, 30, 0.6), 0 0 22px rgba(4, 10, 30, 0.45);
-}
-
-/* ------------------------------------------------------------------ carved sign */
-
-.sign-text {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 56px 70px;
-  font-family: var(--font-carved);
-  font-size: 66px;
-  line-height: 1.24;
-  font-weight: 700;
-  text-align: center;
-  color: #2a1204;
-  user-select: text;
-}
-.sign-text p {
-  margin: 0;
-}
-.sign-word {
-  display: inline-block;
-  /* burned in: a dark groove with a pale lower lip catching the light */
-  text-shadow: 0 2px 0 rgba(255, 226, 180, 0.55), 0 -1px 0 rgba(40, 15, 0, 0.6);
 }
 
 /* ------------------------------------------------------------------ buttons */

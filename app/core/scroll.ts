@@ -1,4 +1,5 @@
 import Lenis from 'lenis'
+import { scrollFromStory } from './timeline'
 
 let lenis: Lenis | null = null
 
@@ -18,8 +19,8 @@ export function createScroll(reduced: boolean) {
 
 export const getScroll = () => lenis
 
-/** Scroll so that progress equals `p`. */
+/** Scroll so that story progress equals `p`. */
 export function scrollToProgress(p: number, immediate = false) {
   if (!lenis) return
-  lenis.scrollTo(p * lenis.limit, { immediate, duration: immediate ? 0 : 1.4, force: true })
+  lenis.scrollTo(scrollFromStory(p) * lenis.limit, { immediate, duration: immediate ? 0 : 1.4, force: true })
 }

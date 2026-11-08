@@ -6,7 +6,6 @@ import { ui } from '~/composables/useStory'
 
 const canvas = ref<HTMLCanvasElement | null>(null)
 const fade = ref<HTMLCanvasElement | null>(null)
-const css = ref<HTMLDivElement | null>(null)
 let instance: World | null = null
 
 onMounted(() => {
@@ -23,7 +22,6 @@ onMounted(() => {
 function create() {
   instance = new World({
     canvas: canvas.value!,
-    cssLayer: css.value!,
     fadeCanvas: fade.value!,
     reduced: ui.reduced,
     roleCount: roles.length,
@@ -41,6 +39,5 @@ onBeforeUnmount(() => instance?.dispose())
   <div class="world" aria-hidden="true">
     <canvas ref="canvas" class="world-canvas" />
     <canvas ref="fade" class="world-fade" />
-    <div ref="css" class="world-css" />
   </div>
 </template>

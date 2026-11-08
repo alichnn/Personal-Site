@@ -310,7 +310,8 @@ button.album-window {
   min-height: 3.4rem;
 }
 .album-name {
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-weight: 600;
   font-size: 1.05rem;
 }
 .album-count {
