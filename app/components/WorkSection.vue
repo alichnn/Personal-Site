@@ -5,8 +5,8 @@ import { roles } from '~/data/content'
 
 <template>
   <!-- each role's lettering floats above its lily pad (scenes/words.ts) -->
-  <TextBlock :range="T.work" label="Work" class="work">
-    <h2 class="work-title ghost headline">Work</h2>
+  <TextBlock :range="T.work" label="Work Experience" class="work">
+    <h2 class="work-title ghost headline">Work Experience</h2>
     <ul class="sr-only">
       <li v-for="(r, i) in roles" :key="i">{{ r.role }}, {{ r.company }}, {{ r.line }}</li>
     </ul>
