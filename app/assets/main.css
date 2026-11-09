@@ -11,6 +11,19 @@
   font-display: swap;
   src: url('/fonts/redaction-700.woff2') format('woff2');
 }
+/* Cormorant Garamond (OFL), for the chapter legend. */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/cormorant-garamond-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/cormorant-garamond-700.woff2') format('woff2');
+}
 @font-face {
   font-family: 'Redaction 20';
   font-weight: 400;

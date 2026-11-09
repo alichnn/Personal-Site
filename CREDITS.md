@@ -18,6 +18,8 @@ All photos are © Alice Chen.
 ## Fonts
 [Redaction](https://www.redaction.us) (Redaction 50 Bold for the hero greeting, Redaction Bold for other headlines, Redaction 20 for other text),
 © 2019 MCKL Inc., SIL Open Font License 1.1 (`public/fonts/OFL.txt`), via Fontsource.
+[Cormorant Garamond](https://github.com/CatharsisFonts/Cormorant) (the chapter legend),
+SIL Open Font License 1.1 (`public/fonts/OFL-cormorant-garamond.txt`), via Fontsource.
 UI chrome uses the system font stack.
 
 ## Libraries

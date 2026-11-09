@@ -1,19 +1,42 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { state } from '~/core/state'
 import { SECTIONS, T, sectionAt } from '~/core/timeline'
 import { flyToProgress } from '~/core/scroll'
 import { ui, useFrame } from '~/composables/useStory'
 
-// Where you are: a frosted pill with the four chapters, the current one highlighted.
-// Appears with the hero greeting.
+// The chapter legend: a quiet column of small capitals in the top-right corner. The current
+// chapter is set in bold with a fine dash in the margin. It appears with the hero greeting and
+// fades away when the visitor has been still for a few seconds, returning on any movement.
+
+const IDLE_MS = 3000
+const ACTIVITY = ['pointermove', 'pointerdown', 'wheel', 'touchstart', 'keydown', 'scroll'] as const
 
 const active = ref(0)
-const shown = ref(false)
+const inStory = ref(false)
+const awake = ref(true)
+/** Pointer over the legend or keyboard focus inside it: never fade then. */
+const engaged = ref(false)
+let timer: ReturnType<typeof setTimeout> | null = null
+
+function wake() {
+  awake.value = true
+  if (timer) clearTimeout(timer)
+  timer = setTimeout(() => (awake.value = false), IDLE_MS)
+}
+
+onMounted(() => {
+  for (const e of ACTIVITY) addEventListener(e, wake, { passive: true, capture: true })
+  wake()
+})
+onBeforeUnmount(() => {
+  for (const e of ACTIVITY) removeEventListener(e, wake, { capture: true })
+  if (timer) clearTimeout(timer)
+})
 
 useFrame(() => {
   const p = state.p
-  shown.value = p >= T.hero[0]
+  inStory.value = p >= T.hero[0]
   active.value = sectionAt(p)
 })
 
@@ -21,7 +44,15 @@ const go = (i: number) => flyToProgress(SECTIONS[i]!.to, ui.reduced)
 </script>
 
 <template>
-  <nav class="story-nav" :class="{ shown: shown && !ui.albumOpen }" aria-label="Sections">
+  <nav
+    class="legend"
+    :class="{ shown: inStory && !ui.albumOpen && (awake || engaged) }"
+    aria-label="Sections"
+    @pointerenter="engaged = true"
+    @pointerleave="engaged = false"
+    @focusin="engaged = true"
+    @focusout="engaged = false"
+  >
     <ul>
       <li v-for="(s, i) in SECTIONS" :key="s.label">
         <button type="button" :class="{ active: i === active }" :aria-current="i === active ? 'location' : undefined" @click="go(i)">
@@ -33,78 +64,90 @@ const go = (i: number) => flyToProgress(SECTIONS[i]!.to, ui.reduced)
 </template>
 
 <style scoped>
-.story-nav {
+.legend {
   position: fixed;
-  top: max(16px, env(safe-area-inset-top));
-  right: max(16px, env(safe-area-inset-right));
+  top: max(26px, env(safe-area-inset-top));
+  right: max(34px, env(safe-area-inset-right));
   z-index: 12;
-  padding: 5px;
-  border-radius: 22px;
-  background: rgba(12, 18, 40, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 6px 24px rgba(6, 10, 30, 0.18);
-  backdrop-filter: blur(14px) saturate(1.4);
-  -webkit-backdrop-filter: blur(14px) saturate(1.4);
   opacity: 0;
-  transform: translateY(-8px);
   pointer-events: none;
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition: opacity 0.9s ease;
 }
-.story-nav.shown {
+.legend.shown {
   opacity: 1;
-  transform: none;
   pointer-events: auto;
+  transition-duration: 0.45s;
 }
 ul {
-  display: flex;
-  gap: 2px;
+  display: grid;
+  justify-items: start;
+  gap: 0.15rem;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 button {
+  position: relative;
   appearance: none;
   border: 0;
-  border-radius: 999px;
-  padding: 8px 13px;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.78);
-  font: 500 0.84rem/1 var(--font);
-  letter-spacing: 0.01em;
+  padding: 0.2rem 0;
+  background: none;
+  color: #f6eedd;
+  font-family: 'Cormorant Garamond', 'Cormorant', Garamond, 'Times New Roman', serif;
+  font-size: 0.98rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  text-align: left;
   white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(10, 14, 34, 0.45), 0 0 14px rgba(10, 14, 34, 0.5);
   cursor: pointer;
-  text-shadow: 0 1px 6px rgba(6, 10, 30, 0.35);
-  transition: background 0.25s ease, color 0.25s ease;
+  transition: font-weight 0.2s ease;
 }
-button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+/* the fine dash sits in the margin, so the words never shift */
+button::before {
+  content: '';
+  position: absolute;
+  right: calc(100% + 10px);
+  top: 50%;
+  width: 16px;
+  height: 1px;
+  background: currentColor;
+  box-shadow: 0 0 6px rgba(10, 14, 34, 0.4);
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 0.35s ease;
 }
 button.active {
-  background: rgba(255, 255, 255, 0.22);
-  color: #fff;
+  font-weight: 700;
+}
+button.active::before {
+  transform: scaleX(1);
+}
+button:hover::before {
+  transform: scaleX(0.55);
+}
+button.active:hover::before {
+  transform: scaleX(1);
 }
 button:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 1px;
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
 }
 @media (max-width: 640px) {
-  /* phones: centred across the top */
-  .story-nav {
-    top: max(12px, env(safe-area-inset-top));
-    left: 0;
-    right: 0;
-    width: max-content;
-    margin: 0 auto;
+  .legend {
+    top: max(16px, env(safe-area-inset-top));
+    right: max(18px, env(safe-area-inset-right));
   }
   button {
-    padding: 7px 10px;
-    font-size: 0.78rem;
+    font-size: 0.86rem;
+    letter-spacing: 0.2em;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .story-nav,
-  button {
+  .legend,
+  button::before {
     transition: none;
   }
 }

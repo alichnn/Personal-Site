@@ -37,7 +37,7 @@ and the scroll timeline divides the hold between them.
 
 - **Scroll timing:** every progress range is in `app/core/timeline.ts`.
 - **Nav chapters:** `SECTIONS` in `app/core/timeline.ts` sets each tab's label, where its highlight
-  begins, and where a jump to it lands (`app/components/StoryNav.vue` draws the pill).
+  begins, and where a jump to it lands (`app/components/StoryNav.vue` draws the legend).
 - **Scroll length:** `INTRO_SVH` (the cloud intro, up to the hero) and `STORY_SVH` (everything after)
   in `app/core/timeline.ts`, in screen heights.
 - **Camera path:** keyframes in `app/core/camera.ts`. Pairs of nearby keys make the plateaus
