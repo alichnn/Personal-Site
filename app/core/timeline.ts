@@ -45,7 +45,7 @@ export const T = {
   seeds: [0.392, 0.476] as [number, number],
   sign: [0.49, 0.506, 0.598, 0.614] as Range4,
   bird: [0.618, 0.664] as [number, number],
-  work: [0.684, 0.696, 0.79, 0.8] as Range4,
+  work: [0.678, 0.69, 0.79, 0.8] as Range4,
   workRoles: [0.698, 0.778] as [number, number],
   sunset: [0.796, 0.818] as [number, number],
   burn: [0.81, 0.832] as [number, number],
@@ -54,6 +54,26 @@ export const T = {
   tilt: [0.952, 0.985] as [number, number],
   constellation2: [0.962, 0.988] as [number, number],
   contact: [0.974, 0.988, 2, 3] as Range4,
+}
+
+/**
+ * The story's chapters, for the nav. `from` is where the chapter begins (for the highlight);
+ * `to` is where a jump to it lands: the hero greeting, the Work heading before any role shows,
+ * the album cards by the fire, and the finished constellation.
+ */
+export const SECTIONS = [
+  { label: 'Intro', from: 0, to: 0.16 },
+  // the heading is fully in by 0.69 and the first role starts fading in just before 0.695
+  { label: 'Work', from: T.work[0], to: 0.6925 },
+  { label: 'About me', from: T.work[3], to: 0.91 },
+  { label: 'Contact', from: T.about[3], to: 1 },
+] as const
+
+/** Index of the chapter that progress `p` is in. */
+export function sectionAt(p: number) {
+  let i = 0
+  SECTIONS.forEach((s, k) => p >= s.from && (i = k))
+  return i
 }
 
 /** The scroll window in which role `i` of `n` is the one in focus. */

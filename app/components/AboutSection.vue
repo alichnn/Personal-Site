@@ -58,6 +58,7 @@ useFrame(() => {
 async function open(i: number, from: HTMLElement) {
   opener = from
   expanded.value = i
+  ui.albumOpen = true
   getScroll()?.stop()
   await nextTick()
   closeBtn.value?.focus()
@@ -67,6 +68,7 @@ async function open(i: number, from: HTMLElement) {
 
 function close() {
   expanded.value = null
+  ui.albumOpen = false
   getScroll()?.start()
   opener?.querySelector<HTMLElement>('.album-window')?.focus()
 }

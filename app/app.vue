@@ -37,6 +37,7 @@ ui.reduced = matchMedia('(prefers-reduced-motion: reduce)').matches || new URLSe
     </div>
 
     <LoaderOverlay />
+    <StoryNav />
     <SoundToggle />
     <div class="scroll-space" :style="{ height: `${SCROLL_SVH}svh` }" aria-hidden="true" />
   </div>

@@ -36,6 +36,8 @@ and the scroll timeline divides the hold between them.
 ## Tuning
 
 - **Scroll timing:** every progress range is in `app/core/timeline.ts`.
+- **Nav chapters:** `SECTIONS` in `app/core/timeline.ts` sets each tab's label, where its highlight
+  begins, and where a jump to it lands (`app/components/StoryNav.vue` draws the pill).
 - **Camera path:** keyframes in `app/core/camera.ts`. Pairs of nearby keys make the plateaus
   where text holds; the gaps between them are the fast flights.
 - **Light and sky per moment:** keyframes in `app/core/atmosphere.ts`.

@@ -13,6 +13,8 @@ export const ui = reactive({
   sound: false,
   /** Set once the visitor nears the campfire, so album images load lazily. */
   albumsNear: false,
+  /** An album is open full-screen (the nav steps aside). */
+  albumOpen: false,
 })
 
 export function useFrame(cb: () => void) {
