@@ -5,8 +5,8 @@ import { SECTIONS, T, sectionAt } from '~/core/timeline'
 import { flyToProgress } from '~/core/scroll'
 import { ui, useFrame } from '~/composables/useStory'
 
-// The chapter legend: a quiet column of small capitals in the top-right corner. The current
-// chapter is set in bold with a fine dash in the margin. It appears with the hero greeting and
+// The chapter legend: a quiet, right-aligned column of small capitals in the top-right corner.
+// The current chapter is set in bold with a fine dash in the margin beside it. It appears with the hero greeting and
 // fades away when the visitor has been still for a few seconds, returning on any movement.
 
 const IDLE_MS = 3000
@@ -67,7 +67,7 @@ const go = (i: number) => flyToProgress(SECTIONS[i]!.to, ui.reduced)
 .legend {
   position: fixed;
   top: max(26px, env(safe-area-inset-top));
-  right: max(34px, env(safe-area-inset-right));
+  right: max(40px, env(safe-area-inset-right));
   z-index: 12;
   opacity: 0;
   pointer-events: none;
@@ -80,7 +80,7 @@ const go = (i: number) => flyToProgress(SECTIONS[i]!.to, ui.reduced)
 }
 ul {
   display: grid;
-  justify-items: start;
+  justify-items: end;
   gap: 0.15rem;
   margin: 0;
   padding: 0;
@@ -92,35 +92,41 @@ button {
   border: 0;
   padding: 0.2rem 0;
   background: none;
-  color: #f6eedd;
+  /* translucent ivory: present but quiet; the current chapter a little stronger */
+  color: rgba(246, 238, 221, 0.4);
   font-family: 'Cormorant Garamond', 'Cormorant', Garamond, 'Times New Roman', serif;
   font-size: 0.98rem;
   font-weight: 500;
   line-height: 1.2;
   letter-spacing: 0.24em;
   text-transform: uppercase;
-  text-align: left;
+  text-align: right;
   white-space: nowrap;
-  text-shadow: 0 1px 2px rgba(10, 14, 34, 0.45), 0 0 14px rgba(10, 14, 34, 0.5);
+  /* a faint halo only: a hard shadow would show through the translucent letters and grey them */
+  text-shadow: 0 0 12px rgba(10, 14, 34, 0.22);
   cursor: pointer;
-  transition: font-weight 0.2s ease;
+  transition: color 0.3s ease;
 }
-/* the fine dash sits in the margin, so the words never shift */
+/* the fine dash sits in the right margin, so the words never shift and the dashes line up */
 button::before {
   content: '';
   position: absolute;
-  right: calc(100% + 10px);
+  left: calc(100% + 10px);
   top: 50%;
   width: 16px;
   height: 1px;
   background: currentColor;
   box-shadow: 0 0 6px rgba(10, 14, 34, 0.4);
   transform: scaleX(0);
-  transform-origin: right center;
+  transform-origin: left center;
   transition: transform 0.35s ease;
+}
+button:hover {
+  color: rgba(246, 238, 221, 0.55);
 }
 button.active {
   font-weight: 700;
+  color: rgba(246, 238, 221, 0.6);
 }
 button.active::before {
   transform: scaleX(1);
@@ -138,7 +144,7 @@ button:focus-visible {
 @media (max-width: 640px) {
   .legend {
     top: max(16px, env(safe-area-inset-top));
-    right: max(18px, env(safe-area-inset-right));
+    right: max(32px, env(safe-area-inset-right));
   }
   button {
     font-size: 0.86rem;
