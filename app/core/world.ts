@@ -60,6 +60,8 @@ export interface WorldOptions {
   fadeCanvas: HTMLCanvasElement
   reduced: boolean
   roleCount: number
+  /** Build every scene before revealing (for links that open partway through the story). */
+  eager?: boolean
   onLoadProgress(f: number): void
   onReady(): void
   onTier(t: Tier): void
@@ -216,6 +218,14 @@ export class World {
     onLoadProgress(0.7)
     await this.buildModule(this.seeds)
     await this.buildModule(this.words)
+    // a link straight to a later chapter needs its scenery ready before the loader lifts
+    if (this.opts.eager) {
+      const later = [this.terrain, this.meadow, this.bird, this.pond, this.campfire]
+      for (const [i, m] of later.entries()) {
+        await this.buildModule(m)
+        onLoadProgress(0.7 + (0.3 * (i + 1)) / (later.length + 1))
+      }
+    }
     onLoadProgress(1)
     // let the push into the clouds read as a beat, even on fast machines
     const minLoader = state.reduced ? 300 : 1400

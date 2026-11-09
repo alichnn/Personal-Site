@@ -25,5 +25,11 @@ export default defineNuxtConfig({
   },
   nitro: {
     preset: 'github_pages',
+    // alicechen.art/intro, /work, /about and /contact each open the story at that chapter.
+    // Written as work.html etc., which GitHub Pages serves at /work with no redirect.
+    prerender: {
+      routes: ['/intro', '/work', '/about', '/contact'],
+      autoSubfolderIndex: false,
+    },
   },
 })

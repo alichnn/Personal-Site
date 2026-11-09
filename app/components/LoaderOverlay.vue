@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { state } from '~/core/state'
-import { getScroll } from '~/core/scroll'
+import { getScroll, scrollToProgress } from '~/core/scroll'
+import { SECTIONS, sectionForPath } from '~/core/timeline'
 import { soundscape } from '~/core/audio'
 import { ui, useFrame } from '~/composables/useStory'
 
@@ -12,7 +13,10 @@ import { ui, useFrame } from '~/composables/useStory'
 
 const pct = computed(() => Math.round(ui.loadProgress * 100))
 const hint = ref<HTMLElement | null>(null)
-const asking = computed(() => ui.ready && !ui.entered)
+// a link like alicechen.art/work skips the CLICK prompt and opens right at that chapter;
+// sound then starts at the visitor's first click or tap (SoundToggle)
+const linked = sectionForPath(location.pathname)
+const asking = computed(() => ui.ready && !ui.entered && linked < 0)
 
 function enter() {
   if (ui.entered) return
@@ -28,6 +32,10 @@ watch(
     // without WebGL there's no story to gate: just show the static page
     if (ready && document.documentElement.classList.contains('no-webgl')) {
       ui.entered = true
+    } else if (ready && linked >= 0) {
+      ui.entered = true
+      getScroll()?.start()
+      scrollToProgress(SECTIONS[linked]!.to, true)
     }
   },
 )

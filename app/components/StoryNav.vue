@@ -40,7 +40,11 @@ useFrame(() => {
   active.value = sectionAt(p)
 })
 
-const go = (i: number) => flyToProgress(SECTIONS[i]!.to, ui.reduced)
+function go(i: number) {
+  flyToProgress(SECTIONS[i]!.to, ui.reduced)
+  // the address follows legend clicks, so it can be copied and shared (no extra back-button steps)
+  history.replaceState(history.state, '', SECTIONS[i]!.path)
+}
 </script>
 
 <template>

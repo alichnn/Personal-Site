@@ -3,6 +3,7 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { World } from '~/core/world'
 import { roles } from '~/data/content'
 import { ui } from '~/composables/useStory'
+import { sectionForPath } from '~/core/timeline'
 
 const canvas = ref<HTMLCanvasElement | null>(null)
 const fade = ref<HTMLCanvasElement | null>(null)
@@ -25,6 +26,7 @@ function create() {
     fadeCanvas: fade.value!,
     reduced: ui.reduced,
     roleCount: roles.length,
+    eager: sectionForPath(location.pathname) > 0,
     onLoadProgress: (f) => (ui.loadProgress = f),
     onReady: () => (ui.ready = true),
     onTier: (t) => (ui.tier = t),

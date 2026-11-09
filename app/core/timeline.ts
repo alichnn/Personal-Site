@@ -65,12 +65,18 @@ export const T = {
  * the album cards by the fire, and the finished constellation.
  */
 export const SECTIONS = [
-  { label: 'Intro', from: 0, to: 0.16 },
+  { label: 'Intro', path: '/intro', from: 0, to: 0.16 },
   // the heading is fully in by 0.69 and the first role starts fading in just before 0.695
-  { label: 'Work', from: T.work[0], to: 0.6925 },
-  { label: 'About', from: T.work[3], to: 0.91 },
-  { label: 'Contact', from: T.about[3], to: 1 },
+  { label: 'Work', path: '/work', from: T.work[0], to: 0.6925 },
+  { label: 'About', path: '/about', from: T.work[3], to: 0.91 },
+  { label: 'Contact', path: '/contact', from: T.about[3], to: 1 },
 ] as const
+
+/** The chapter a link like alicechen.art/work opens at, or -1 for the home page. */
+export function sectionForPath(path: string) {
+  const clean = path.toLowerCase().replace(/\.html$/, '').replace(/\/+$/, '')
+  return SECTIONS.findIndex((s) => s.path === clean)
+}
 
 /** Index of the chapter that progress `p` is in. */
 export function sectionAt(p: number) {
