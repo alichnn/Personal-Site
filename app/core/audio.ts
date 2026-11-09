@@ -29,6 +29,11 @@ class Soundscape {
   private windFilter!: BiquadFilterNode
   private next = { bird: 0, drip: 0, frog: 0, crackle: 0, cricket: 0 }
 
+  /** True once the browser is actually playing (it needs a click, tap or keypress first). */
+  get running() {
+    return this.ctx?.state === 'running'
+  }
+
   setEnabled(on: boolean) {
     this.enabled = on
     if (on && !this.ctx) this.init()

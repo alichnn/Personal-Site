@@ -1,9 +1,24 @@
 <script setup lang="ts">
-import { onBeforeUnmount } from 'vue'
+import { onBeforeUnmount, onMounted } from 'vue'
 import { ui, useFrame } from '~/composables/useStory'
 import { soundscape } from '~/core/audio'
 
-// Ambient sound: off by default, one small persistent toggle.
+// Ambient sound: on by default, one small persistent toggle. Browsers only start audio after a
+// click, tap or keypress (scrolling doesn't count), so the soundscape starts at the first one.
+
+const GESTURES = ['pointerdown', 'pointerup', 'touchend', 'keydown'] as const
+
+function unlock() {
+  if (ui.sound) soundscape.setEnabled(true)
+  // keep listening until the browser lets it play (or the visitor turned sound off)
+  if (soundscape.running || !ui.sound) stopListening()
+}
+function stopListening() {
+  for (const g of GESTURES) removeEventListener(g, unlock, true)
+}
+onMounted(() => {
+  for (const g of GESTURES) addEventListener(g, unlock, true)
+})
 
 function toggle() {
   ui.sound = !ui.sound
@@ -11,7 +26,10 @@ function toggle() {
 }
 
 useFrame(() => soundscape.update())
-onBeforeUnmount(() => soundscape.setEnabled(false))
+onBeforeUnmount(() => {
+  stopListening()
+  soundscape.setEnabled(false)
+})
 </script>
 
 <template>

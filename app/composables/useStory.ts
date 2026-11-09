@@ -10,9 +10,8 @@ export const ui = reactive({
   ready: false,
   tier: 'high' as Tier,
   reduced: false,
-  sound: false,
-  /** The visitor pressed Enter: scrolling is unlocked and the soundscape is playing. */
-  entered: false,
+  /** Sound is on by default; it starts at the first click, tap or keypress (see SoundToggle). */
+  sound: true,
   /** Set once the visitor nears the campfire, so album images load lazily. */
   albumsNear: false,
   /** An album is open full-screen (the nav steps aside). */

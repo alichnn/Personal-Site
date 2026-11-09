@@ -18,15 +18,18 @@ export const damp = (current: number, target: number, lambda: number, dt: number
 
 export type Range4 = [number, number, number, number]
 
-/** Total scroll length, in small-viewport heights. */
-export const SCROLL_SVH = 2000
-
 /**
- * The cloud intro (story 0 → INTRO_STORY) takes only the first INTRO_SCROLL of the page, so the
- * fly-through is brisk and later sections get more room. Everything else is keyed on story progress.
+ * Scroll lengths, in small-viewport heights. The cloud intro (story 0 → INTRO_STORY, up to
+ * "Hey, I'm Alice") gets its own budget; the rest of the story moves at its own pace.
+ * Everything else is keyed on story progress, so these only change how far you scroll.
  */
+const INTRO_SVH = 210
+const STORY_SVH = 1395
+/** Total scroll length, in small-viewport heights. */
+export const SCROLL_SVH = INTRO_SVH + STORY_SVH
+
 const INTRO_STORY = 0.118
-const INTRO_SCROLL = 0.07
+const INTRO_SCROLL = INTRO_SVH / SCROLL_SVH
 export function storyFromScroll(s: number) {
   return s <= INTRO_SCROLL ? (s * INTRO_STORY) / INTRO_SCROLL : INTRO_STORY + ((s - INTRO_SCROLL) * (1 - INTRO_STORY)) / (1 - INTRO_SCROLL)
 }
