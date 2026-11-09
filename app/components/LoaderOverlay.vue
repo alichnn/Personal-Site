@@ -59,7 +59,7 @@ useFrame(() => {
   </div>
   <!-- the whole screen is the click target; the word is the button for keyboards and screen readers -->
   <div class="click-in" :class="{ shown: asking }" @click="enter">
-    <button type="button" class="click-word" :tabindex="asking ? 0 : -1" aria-label="Click to begin, with sound" @click.stop="enter">Click</button>
+    <button type="button" class="click-word" :tabindex="asking ? 0 : -1" aria-label="Click for sound" @click.stop="enter">Click for sound</button>
   </div>
   <div ref="hint" class="scroll-hint" aria-hidden="true">
     <span>Scroll</span>
@@ -125,22 +125,23 @@ useFrame(() => {
   border: 0;
   background: none;
   padding: 1rem 1.5rem;
-  /* translucent navy: the opening view is bright cloud, where ivory would vanish */
-  color: rgba(23, 52, 94, 0.55);
+  /* white, with a soft navy halo so it still reads against the bright clouds */
+  color: rgba(255, 255, 255, 0.92);
   font-family: 'Cormorant Garamond', 'Cormorant', Garamond, 'Times New Roman', serif;
   font-size: clamp(1.15rem, 1.6vw, 1.45rem);
   font-weight: 500;
-  letter-spacing: 0.6em;
-  /* balance the trailing letter-space so the word sits truly centred */
-  text-indent: 0.6em;
+  letter-spacing: 0.45em;
+  /* balance the trailing letter-space so the words sit truly centred */
+  text-indent: 0.45em;
+  white-space: nowrap;
   text-transform: uppercase;
-  text-shadow: 0 0 18px rgba(255, 255, 255, 0.6);
+  text-shadow: 0 0 1px rgba(23, 52, 94, 0.55), 0 1px 3px rgba(23, 52, 94, 0.4), 0 0 20px rgba(23, 52, 94, 0.45);
   cursor: pointer;
   animation: breathe 3.2s ease-in-out infinite;
   transition: color 0.3s ease;
 }
 .click-word:hover {
-  color: rgba(23, 52, 94, 0.8);
+  color: #fff;
 }
 .click-word:focus-visible {
   outline: 2px solid var(--focus);
@@ -160,9 +161,11 @@ useFrame(() => {
   justify-items: center;
   gap: 0.15rem;
   color: #17345e;
-  font-size: 0.85rem;
+  font-family: 'Cormorant Garamond', 'Cormorant', Garamond, 'Times New Roman', serif;
+  font-size: 1rem;
   font-weight: 700;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
   text-transform: uppercase;
   opacity: 0;
   pointer-events: none;
