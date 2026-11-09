@@ -23,6 +23,7 @@ const haze = ref<HTMLElement | null>(null)
 const live = ref('')
 
 const wrap = (i: number) => ((i % n.value) + n.value) % n.value
+const current = computed(() => props.album.photos[index.value]!)
 /** Current photo plus its neighbours, so the next/previous image is always already loaded. */
 const stack = computed(() => {
   const set = new Set([index.value, wrap(index.value + 1), wrap(index.value - 1)])
@@ -43,7 +44,7 @@ function go(dir: number, from?: HTMLElement) {
 
 /** The one signature effect: the new photo develops in from a warm haze. */
 function develop() {
-  const img = root.value?.querySelector<HTMLElement>('.photo.current img')
+  const img = root.value?.querySelector<HTMLElement>('.photo.current video') ?? root.value?.querySelector<HTMLElement>('.photo.current img')
   if (!img || !haze.value) return
   if (ui.reduced) {
     animate(haze.value, { opacity: [0.6, 0], duration: 250, ease: 'linear' })
@@ -169,6 +170,22 @@ defineExpose({ root })
           draggable="false"
         >
       </picture>
+      <!-- a clip loops silently over its poster while it's the photo showing, like a live photo -->
+      <video
+        v-if="load !== false && current.video && !ui.reduced"
+        :key="`${current.src}.mp4`"
+        class="photo current clip"
+        :src="`${current.src}.mp4`"
+        :poster="`${current.src}-800.webp`"
+        :aria-label="current.alt"
+        muted
+        loop
+        autoplay
+        playsinline
+        disablepictureinpicture
+        preload="auto"
+        draggable="false"
+      />
       <span ref="haze" class="haze" aria-hidden="true" />
       <template v-if="!compact">
         <button type="button" class="arrow prev" :aria-label="`Previous ${name} photo`" @click.stop="go(-1, $event.currentTarget as HTMLElement)">
@@ -181,7 +198,9 @@ defineExpose({ root })
     </component>
     <div class="album-strip">
       <span class="album-name">{{ album.name }}</span>
-      <span v-if="!compact" class="album-count" aria-hidden="true">{{ index + 1 }} / {{ n }}</span>
+      <span v-if="!compact" class="album-count" aria-hidden="true">
+        <svg v-if="current.video" class="clip-mark" viewBox="0 0 12 12"><path d="M3 1.8v8.4L10.2 6z" fill="currentColor" /></svg>{{ index + 1 }} / {{ n }}
+      </span>
     </div>
     <p class="sr-only" aria-live="polite">{{ live }}</p>
   </div>
@@ -241,9 +260,21 @@ button.album-window {
   width: 100%;
   height: 100%;
 }
-.photo img {
+.photo img,
+.photo.clip {
   object-fit: cover;
   display: block;
+}
+.photo.clip {
+  /* above its poster, under the developing haze */
+  pointer-events: none;
+}
+.clip-mark {
+  width: 0.6rem;
+  height: 0.6rem;
+  margin-right: 0.35rem;
+  vertical-align: -0.02rem;
+  opacity: 0.75;
 }
 .photo {
   opacity: 0;
