@@ -9,7 +9,7 @@ import { albums } from '~/data/albums'
 import { ui, useFrame } from '~/composables/useStory'
 import AlbumCard from './AlbumCard.vue'
 
-const TILTS = [-2, 1, -1]
+const TILTS = [-2, 1, -1, 1.5]
 const compact = ref(false)
 const inner = ref<HTMLElement | null>(null)
 const cards = ref<InstanceType<typeof AlbumCard>[]>([])
@@ -145,7 +145,7 @@ function trapTab(e: KeyboardEvent) {
   display: flex;
   flex-direction: column;
   gap: clamp(2rem, 6.5vh, 3.6rem);
-  width: min(880px, 64vw);
+  width: min(1000px, 70vw);
   margin-left: 2vw;
 }
 .about-copy {
@@ -164,10 +164,11 @@ function trapTab(e: KeyboardEvent) {
   line-height: 1.35;
 }
 .albums {
-  --card-w: clamp(150px, min(16vw, 30vh), 236px);
+  /* four polaroids in a row, sized so the last one stops short of the campfire */
+  --card-w: clamp(132px, min(13vw, 27vh), 208px);
   display: flex;
   flex-wrap: nowrap;
-  gap: clamp(1.6rem, 4.5vw, 4rem);
+  gap: clamp(1.1rem, 2.8vw, 2.6rem);
   align-items: flex-start;
 }
 .album-modal {
@@ -200,8 +201,11 @@ function trapTab(e: KeyboardEvent) {
     max-width: none;
   }
   .albums {
-    --card-w: calc((100vw - 32px - 1.6rem) / 3);
-    gap: 0.8rem;
+    /* phones: a 2 × 2 stack, so each polaroid stays big enough to see */
+    --card-w: min(calc((100vw - 56px - 1rem) / 2), 21vh);
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
     align-self: center;
   }
 }
