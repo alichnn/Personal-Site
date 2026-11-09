@@ -108,9 +108,13 @@ export async function makeSignpost(arrows: SignArrow[], font = '"Redaction", Geo
   root.add(postMesh)
 
   const nail = toon('#4a4440', { rim: 0.9 })
-  const tall = 0.44, tip = 0.3, tail = 0.12
+  const tip = 0.3, tail = 0.12
+  let top = 2.72
   arrows.forEach((a, i) => {
-    const len = 1.15 + a.label.length * 0.07
+    // long labels go on two lines on a taller plank, so the sign stays compact
+    const lines = a.label.length > 11 ? a.label.split(' ') : [a.label]
+    const tall = lines.length > 1 ? 0.62 : 0.44
+    const len = 1.2 + Math.max(...lines.map((l) => l.length)) * 0.075
     const s = a.dir === 'right' ? 1 : -1
     // swallow-tail plank pointing +x, mirrored for left
     const pts: [number, number][] = [[-0.3, -tall / 2], [len, -tall / 2], [len + tip, 0], [len, tall / 2], [-0.3, tall / 2], [-0.3 + tail, 0]]
@@ -128,9 +132,10 @@ export async function makeSignpost(arrows: SignArrow[], font = '"Redaction", Geo
       uv[k * 2 + 1] = (pos.getY(k) - bb.min.y) / bh
     }
     geo.setAttribute('uv', new BufferAttribute(uv, 2))
-    const tex = paintPlank(a.label, pts.map(([x, y]) => [x * s, y]), bb.min.x, bb.max.y, bw, bh, font, i ? '#c9935a' : '#dba86c', 11 + i)
+    const tex = paintPlank(lines, pts.map(([x, y]) => [x * s, y]), bb.min.x, bb.max.y, bw, bh, font, i ? '#c9935a' : '#dba86c', 11 + i)
     const board = new Mesh(geo, toon('#ffffff', { map: tex, rim: 0.45 }))
-    board.position.set(0, i ? 1.95 : 2.45, 0.17)
+    board.position.set(0, top - tall / 2, 0.17)
+    top -= tall + 0.07
     board.rotation.set(0, s * (i ? -0.12 : 0.1), (i ? -0.03 : 0.025) * s)
     root.add(board)
     // nail heads where the plank meets the post
@@ -174,7 +179,7 @@ export function paintGrain(ctx: CanvasRenderingContext2D, w: number, h: number, 
 }
 
 /** Paints one arrow plank: base colour, wavy grain, a knot, darker worn edges, and carved lettering. */
-function paintPlank(label: string, pts: [number, number][], minX: number, maxY: number, bw: number, bh: number, font: string, base: string, seed: number) {
+function paintPlank(lines: string[], pts: [number, number][], minX: number, maxY: number, bw: number, bh: number, font: string, base: string, seed: number) {
   const r = rng(seed)
   const W = 1024, Hc = Math.round((W * bh) / bw)
   const c = document.createElement('canvas')
@@ -204,23 +209,29 @@ function paintPlank(label: string, pts: [number, number][], minX: number, maxY: 
   // carved lettering, centred on the body of the plank (not the tip or tail)
   const xs = pts.map((p) => toPx(p)[0])
   const left = Math.min(...xs), right = Math.max(...xs)
-  const bodyL = left + (right - left) * (pts[0]![0] < pts[1]![0] ? 0.08 : 0.2)
-  const bodyR = right - (right - left) * (pts[0]![0] < pts[1]![0] ? 0.2 : 0.08)
-  let size = Hc * 0.52
+  // the plank's body: clear of the arrow tip at one end and of the post and its nails (world x = 0) at the other
+  const pointsRight = pts[0]![0] < pts[1]![0]
+  const post = toPx([0, 0])[0], clear = (0.13 / bw) * W
+  const bodyL = pointsRight ? post + clear : left + (right - left) * 0.2
+  const bodyR = pointsRight ? right - (right - left) * 0.2 : post - clear
+  let size = Hc * (lines.length > 1 ? 0.36 : 0.52)
   ctx.font = `700 ${size}px ${font}`
   const maxW = (bodyR - bodyL) * 0.9
-  const w = ctx.measureText(label).width
+  const w = Math.max(...lines.map((l) => ctx.measureText(l).width))
   if (w > maxW) {
     size *= maxW / w
     ctx.font = `700 ${size}px ${font}`
   }
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  const cx = (bodyL + bodyR) / 2, cy = Hc / 2 + size * 0.04
-  ctx.fillStyle = 'rgba(255, 236, 200, 0.55)'
-  ctx.fillText(label, cx, cy + size * 0.05)
-  ctx.fillStyle = '#3a2210'
-  ctx.fillText(label, cx, cy)
+  const cx = (bodyL + bodyR) / 2, lineH = size * 1.05
+  lines.forEach((line, k) => {
+    const cy = Hc / 2 + size * 0.04 + (k - (lines.length - 1) / 2) * lineH
+    ctx.fillStyle = 'rgba(255, 236, 200, 0.55)'
+    ctx.fillText(line, cx, cy + size * 0.05)
+    ctx.fillStyle = '#3a2210'
+    ctx.fillText(line, cx, cy)
+  })
   const tex = new CanvasTexture(c)
   tex.colorSpace = SRGBColorSpace
   tex.anisotropy = 8

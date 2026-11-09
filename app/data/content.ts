@@ -9,12 +9,12 @@ export const people = 'My interest lies in people…'
 
 export const goal = 'and a life-long goal of mine is to drive meaningful connections, for both myself and others.'
 
-export const earth = 'I hope to bring this into my work, by understanding how people think and designing for it.'
+export const earth = 'I want to learn about human behaviour, tell the story, and design for user needs.'
 
 /** The two arrows on the meadow signpost. */
 export const signArrows: { label: string; dir: 'left' | 'right' }[] = [
-  { label: 'Dim Sum', dir: 'right' },
-  { label: 'Deadlifts', dir: 'left' },
+  { label: 'Product Management', dir: 'right' },
+  { label: 'Marketing Analytics', dir: 'left' },
 ]
 
 export interface Role {

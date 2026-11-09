@@ -15,6 +15,7 @@ export class Meadow implements WorldModule {
   built = false
   private flowers: Flower[] = []
   private squirrels: Squirrel[] = []
+  private sign = new Group()
 
   async build(w: World) {
     const sign = await makeSignpost(signArrows)
@@ -24,6 +25,8 @@ export class Meadow implements WorldModule {
     w.rig.sample(0.55, camPos, look)
     sign.root.rotation.y = Math.atan2(camPos.x - SIGN.x, camPos.z - SIGN.z) - 0.12
     this.group.add(sign.root)
+    this.sign = sign.root
+    this.resize(w)
 
     // sunflowers: behind and to the right of the sign, a few to the left
     const r = rng(12)
@@ -53,6 +56,11 @@ export class Meadow implements WorldModule {
       this.group.add(s.root)
       this.squirrels.push({ parts: s, phase: r() * 10, nextLook: 2 + r() * 4, lookUntil: 0, flickAt: 1 + r() * 3, lastFlick: -10 })
     }
+  }
+
+  /** A little smaller on tall phone screens, so both arrow tips stay in view. */
+  resize(w: World) {
+    this.sign.scale.setScalar(1 - 0.14 * w.rig.narrow)
   }
 
   update() {
