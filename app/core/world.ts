@@ -223,7 +223,7 @@ export class World {
     if (this.disposed) return
     this.ready = true
     state.loaded = true
-    this.lenis.start()
+    // scrolling unlocks when the visitor presses Enter (LoaderOverlay), which also starts the sound
     onReady()
 
     // Phase 3: stream later scenes during idle time, in scroll order.

@@ -19,7 +19,7 @@ export const damp = (current: number, target: number, lambda: number, dt: number
 export type Range4 = [number, number, number, number]
 
 /** Total scroll length, in small-viewport heights. */
-export const SCROLL_SVH = 3000
+export const SCROLL_SVH = 2000
 
 /**
  * The cloud intro (story 0 → INTRO_STORY) takes only the first INTRO_SCROLL of the page, so the

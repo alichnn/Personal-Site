@@ -5,18 +5,16 @@ import { SECTIONS, T, sectionAt } from '~/core/timeline'
 import { flyToProgress } from '~/core/scroll'
 import { ui, useFrame } from '~/composables/useStory'
 
-// Where you are and how far there is to go: a frosted pill with the four chapters, the current
-// one highlighted, and a hairline that fills with progress. Appears with the hero greeting.
+// Where you are: a frosted pill with the four chapters, the current one highlighted.
+// Appears with the hero greeting.
 
 const active = ref(0)
 const shown = ref(false)
-const fill = ref<HTMLElement | null>(null)
 
 useFrame(() => {
   const p = state.p
   shown.value = p >= T.hero[0]
   active.value = sectionAt(p)
-  if (fill.value) fill.value.style.transform = `scaleX(${Math.min(1, Math.max(0, p)).toFixed(4)})`
 })
 
 const go = (i: number) => flyToProgress(SECTIONS[i]!.to, ui.reduced)
@@ -31,7 +29,6 @@ const go = (i: number) => flyToProgress(SECTIONS[i]!.to, ui.reduced)
         </button>
       </li>
     </ul>
-    <div class="track" aria-hidden="true"><div ref="fill" class="fill" /></div>
   </nav>
 </template>
 
@@ -41,7 +38,7 @@ const go = (i: number) => flyToProgress(SECTIONS[i]!.to, ui.reduced)
   top: max(16px, env(safe-area-inset-top));
   right: max(16px, env(safe-area-inset-right));
   z-index: 12;
-  padding: 5px 5px 11px;
+  padding: 5px;
   border-radius: 22px;
   background: rgba(12, 18, 40, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -90,22 +87,6 @@ button.active {
 button:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 1px;
-}
-.track {
-  position: absolute;
-  left: 18px;
-  right: 18px;
-  bottom: 5px;
-  height: 2px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.18);
-  overflow: hidden;
-}
-.fill {
-  height: 100%;
-  background: rgba(255, 255, 255, 0.9);
-  transform-origin: left center;
-  transform: scaleX(0);
 }
 @media (max-width: 640px) {
   /* phones: centred across the top */

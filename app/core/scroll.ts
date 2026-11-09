@@ -23,13 +23,13 @@ const inOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) **
 
 /**
  * Fly the story to progress `p` (the nav and "back to the start"): the duration grows with the
- * distance, about 1s to a neighbouring chapter and at most 2.6s across the whole story.
+ * distance, about 2s to the nearest chapter and up to about 6s across the whole story.
  */
 export function flyToProgress(p: number, immediate = false) {
   if (!lenis) return
   const target = scrollFromStory(p) * lenis.limit
   const dist = Math.abs(target - lenis.scroll) / Math.max(1, lenis.limit)
-  lenis.scrollTo(target, { immediate, duration: Math.min(2.6, 0.8 + dist * 2.2), easing: inOutCubic, force: true })
+  lenis.scrollTo(target, { immediate, duration: Math.min(6.5, 1.6 + dist * 5), easing: inOutCubic, force: true })
 }
 
 /** Scroll so that story progress equals `p`. */
