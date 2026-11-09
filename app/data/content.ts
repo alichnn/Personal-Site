@@ -21,13 +21,15 @@ export interface Role {
   role: string
   company: string
   line: string
+  /** One-liner under the company, kept to at most two lines. */
+  blurb: string
 }
 
 /** One lily pad per role. Add or remove entries freely; the pond adapts. */
 export const roles: Role[] = [
-  { role: 'Data Engineer', company: '@Blumont Annuity', line: 'Insurance' },
-  { role: 'Product Strategy', company: '@RBC', line: 'Credit Cards' },
-  { role: 'Operations Analyst', company: '@CIBC', line: 'Fraud Mitigation' },
+  { role: 'Data Engineer', company: '@Blumont Annuity', line: 'Insurance', blurb: 'led the redesign of workflow inefficiencies into one Python solution' },
+  { role: 'Product Strategy', company: '@RBC', line: 'Credit Cards', blurb: 'influenced a product decision affecting $70M–$100M in revenue by synthesizing client behaviour trends from SQL analysis' },
+  { role: 'Operations Analyst', company: '@CIBC', line: 'Fraud Mitigation', blurb: 'modelled for resource needs through linear models and statistical analysis' },
 ]
 
 export const about =

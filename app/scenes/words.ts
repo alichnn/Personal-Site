@@ -1,7 +1,7 @@
 import { Group, MathUtils, Matrix4, Quaternion, Vector3 } from 'three'
 import type { World, WorldModule } from '../core/world'
 import { preloadFont } from 'troika-three-text'
-import { FLAT_FONT, FlatText, HEADLINE_FONT, HERO_FONT, type FlatLayout, type FlatStyle } from '../core/flattext'
+import { CAPTION_FONT, FLAT_FONT, FlatText, HEADLINE_FONT, HERO_FONT, type FlatLayout, type FlatStyle } from '../core/flattext'
 import { state } from '../core/state'
 import { T, roleSlot, smooth, type Range4 } from '../core/timeline'
 import { about, contacts, earth, goal, people, roles } from '../data/content'
@@ -59,8 +59,10 @@ const GHOSTS: GhostItem[] = [
 
 const ROLE_STYLE: FlatStyle = { color: '#f6fbfa', outline: '#0a3436', halo: '#04201f', haloOpacity: 0.5 }
 const COMPANY_STYLE: FlatStyle = { ...ROLE_STYLE, color: '#a8efe1' }
-/** Gap between a role's title and its company line, in CSS px at the pad's distance. */
-const ROLE_GAP = 6
+/** The one-liner: a soft italic caption, paler and quieter than the two lines above it. */
+const BLURB_STYLE: FlatStyle = { font: CAPTION_FONT, color: '#d6f3ec', outline: '#0a3436', outlineWidth: 0.05, halo: '#04201f', haloOpacity: 0.55, letterSpacing: 0.01 }
+/** Space after each role line (title, company, one-liner), in CSS px at the pad's distance. */
+const ROLE_GAPS = [12, 12, 0]
 const CONTACT_STYLE: FlatStyle = { color: '#c3cdf2', outline: '#0d1a4a', halo: '#02051a', haloOpacity: 0.6 }
 
 /** Every character the flat text needs, so the font's glyph atlas is ready before the first reveal. */
@@ -86,6 +88,7 @@ export class Words implements WorldModule {
     await Promise.all([
       new Promise<void>((resolve) => preloadFont({ font: FLAT_FONT, characters: FLAT_CHARS }, resolve)),
       ...[HEADLINE_FONT, HERO_FONT].map((font) => new Promise<void>((resolve) => preloadFont({ font, characters: charsFor(font) }, resolve))),
+      new Promise<void>((resolve) => preloadFont({ font: CAPTION_FONT, characters: roles.map((r) => r.blurb).join('') }, resolve)),
     ])
     // the HTML ghost layout uses the same fonts; wait for them so the measurements match
     await Promise.all([
@@ -172,17 +175,25 @@ export class Words implements WorldModule {
       const k = this.pxToWorld(pose.fov, d)
       const narrow = innerWidth < 640
       const max = (narrow ? innerWidth * 0.8 : 440) * k
+      // the one-liner may run a little wider than the title, and shrinks if it would need a third line
+      const wide = (narrow ? innerWidth * 0.86 : 560) * k
+      const layoutFor = (j: number, px: number) => (j === 2 ? { size: px * k, maxWidth: wide, anchorY: 'top' as const, maxLines: 2, balance: true } : { size: px * k, maxWidth: max, anchorY: 'top' as const })
       const specs: [string, FlatStyle, number][] = [
         [role.role, ROLE_STYLE, narrow ? 28 : 38],
         [`${role.company}, ${role.line}`, COMPANY_STYLE, narrow ? 23 : 29],
+        [role.blurb, BLURB_STYLE, narrow ? 18 : 24],
       ]
       let lines = this.roleLetters[i]
       if (!lines) {
-        lines = specs.map(([text, style, px]) => new FlatText(text, style, { size: px * k, maxWidth: max, anchorY: 'top' }))
+        lines = specs.map(([text, style, px], j) => new FlatText(text, style, layoutFor(j, px)))
         lines.forEach((l) => this.group.add(l.group))
         this.roleLetters[i] = lines
-      } else specs.forEach(([, , px], j) => lines![j]!.layout({ size: px * k, maxWidth: max, anchorY: 'top' }))
-      lines.forEach((l) => (l.group.userData.k = k))
+      } else specs.forEach(([, , px], j) => lines![j]!.layout(layoutFor(j, px)))
+      lines.forEach((l) => {
+        l.group.userData.k = k
+        // the whole role (title, company, one-liner) rises and settles as one block
+        l.drift = specs[0]![2] * k
+      })
     })
   }
 
@@ -232,14 +243,16 @@ export class Words implements WorldModule {
       const arriving = p < (a + b) / 2
       const base = w.pond.padAnchors[i]!
       const k = lines[0]!.group.userData.k as number
+      const shift = lines[0]!.group.visible || lines[2]!.group.visible ? this.edgeShift(w, base, lines) : 0
       let y = this.stackHeight(lines)
-      for (const l of lines) {
+      for (const [j, l] of lines.entries()) {
         l.setReveal(arriving ? f : 1, arriving ? 0 : 1 - f, motion)
         l.group.position.copy(base)
         l.group.position.y += 0.5 + (motion ? Math.sin(t * 0.9 + i) * 0.05 : 0)
         l.group.quaternion.copy(this.roleQuat)
         l.group.translateY(y)
-        y -= l.height + ROLE_GAP * k
+        l.group.translateX(shift)
+        y -= l.height + ROLE_GAPS[j]! * k
       }
     })
 
@@ -258,8 +271,23 @@ export class Words implements WorldModule {
     })
   }
 
+  /** Sideways nudge (world units) that keeps a role's widest line at least 16px inside the screen edges. */
+  private edgeShift(w: World, base: Vector3, lines: FlatText[]) {
+    const cam = w.camera
+    const half = Math.max(...lines.map((l) => l.width)) / 2
+    const dist = this.tmp.copy(base).sub(cam.position).length()
+    const unitsPerNdc = dist * Math.tan(MathUtils.degToRad(cam.fov / 2)) * cam.aspect
+    const x = this.tmp.copy(base).project(cam).x
+    const hw = half / unitsPerNdc
+    const m = 32 / innerWidth
+    if (2 * (hw + m) >= 2) return -x * unitsPerNdc
+    if (x - hw < -1 + m) return (-1 + m - (x - hw)) * unitsPerNdc
+    if (x + hw > 1 - m) return (1 - m - (x + hw)) * unitsPerNdc
+    return 0
+  }
+
   private stackHeight(lines: FlatText[]) {
     const k = lines[0]!.group.userData.k as number
-    return lines.reduce((a, l) => a + l.height + ROLE_GAP * k, 0)
+    return lines.reduce((a, l, j) => a + l.height + ROLE_GAPS[j]! * k, 0)
   }
 }

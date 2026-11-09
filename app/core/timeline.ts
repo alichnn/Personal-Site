@@ -68,7 +68,7 @@ export const SECTIONS = [
   { label: 'Intro', from: 0, to: 0.16 },
   // the heading is fully in by 0.69 and the first role starts fading in just before 0.695
   { label: 'Work', from: T.work[0], to: 0.6925 },
-  { label: 'About me', from: T.work[3], to: 0.91 },
+  { label: 'About', from: T.work[3], to: 0.91 },
   { label: 'Contact', from: T.about[3], to: 1 },
 ] as const
 

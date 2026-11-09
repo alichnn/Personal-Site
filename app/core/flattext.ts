@@ -10,6 +10,8 @@ export const FLAT_FONT = '/fonts/redaction-20-400.woff'
 export const HERO_FONT = '/fonts/redaction-50-700.woff'
 /** Clean (un-eroded) Redaction Bold, for the section headlines. */
 export const HEADLINE_FONT = '/fonts/redaction-700.woff'
+/** Cormorant Garamond SemiBold Italic, for the quiet one-line captions under the roles. */
+export const CAPTION_FONT = '/fonts/cormorant-garamond-600-italic.woff'
 
 export interface FlatLayout {
   /** Font size in world units. */
@@ -21,6 +23,10 @@ export interface FlatLayout {
   /** Which point of the block sits at the group's origin. */
   anchorX?: 'left' | 'center' | 'right'
   anchorY?: 'top' | 'middle' | 'bottom'
+  /** Shrink the type until it wraps to at most this many lines. */
+  maxLines?: number
+  /** Wrap to evenly filled lines (no lone last word) within maxWidth. */
+  balance?: boolean
 }
 
 export interface FlatStyle {
@@ -43,18 +49,20 @@ export interface FlatStyle {
 
 export class FlatText {
   readonly group = new Group()
-  width = 0
-  height = 0
   private text = new Text()
   private halo = new Text()
   private size = 1
-  private lines = 1
+  private lineHeight = 1.2
+  private estWidth = 0
   private haloOpacity: number
   private baseColor: Color
   private haloColor: Color
   /** Current reveal opacity, so the hover glow can scale with it. */
   private alpha = 0
   private glowK = 0
+  /** How far the text drifts as it fades (world units); defaults to its font size. Lines that
+   *  share a drift move as one block, so a stack of differently sized lines never collides. */
+  drift?: number
 
   constructor(content: string, private style: FlatStyle, layout: FlatLayout) {
     this.haloOpacity = style.haloOpacity ?? 0.42
@@ -83,7 +91,9 @@ export class FlatText {
     this.layout(layout)
   }
 
-  layout(l: FlatLayout) {
+  /** `then` runs once this layout has been measured (and wasn't superseded). */
+  layout(l: FlatLayout, then?: () => void) {
+    if (l.balance && l.maxWidth) return this.balanced(l)
     this.size = l.size
     const align = l.align ?? 'center'
     const anchorY = l.anchorY === 'top' ? 'top-cap' : l.anchorY === 'bottom' ? 'bottom-baseline' : 'middle'
@@ -97,17 +107,57 @@ export class FlatText {
       t.overflowWrap = 'break-word'
     }
     this.text.outlineWidth = `${((this.style.outlineWidth ?? 0.07) * 100).toFixed(1)}%`
-    // estimate until the layout worker reports back
-    this.width = l.maxWidth ?? l.size * 8
-    this.height = l.size * (l.lineHeight ?? 1.2) * this.lines
+    this.lineHeight = l.lineHeight ?? 1.2
+    this.estWidth = l.maxWidth ?? l.size * 8
+    const done = () => {
+      // a newer layout (e.g. the shrink-to-fit below) supersedes this one
+      if (!this.measured || l.size !== this.size) return
+      if (l.maxLines && this.lines > l.maxLines) this.layout({ ...l, size: l.size * 0.94 }, then)
+      else then?.()
+    }
     this.halo.sync()
-    this.text.sync(() => {
-      const b = this.text.textRenderInfo?.blockBounds as number[] | undefined
-      if (!b) return
-      this.width = b[2]! - b[0]!
-      const lineH = l.size * (l.lineHeight ?? 1.2)
-      this.lines = Math.max(1, Math.round((b[3]! - b[1]!) / lineH))
-      this.height = lineH * (this.lines - 1) + l.size * 0.72
+    this.text.sync(done)
+    // troika skips the sync (and its callback) when nothing changed: the measurement is already current
+    if (!(this.text as unknown as { _isSyncing?: boolean })._isSyncing) done()
+  }
+
+  /** Troika's latest measurement, once it matches the current size. */
+  private get measured() {
+    const info = this.text.textRenderInfo as { blockBounds?: number[]; parameters?: { fontSize?: number } } | null
+    return info?.blockBounds && info.parameters?.fontSize === this.size ? info.blockBounds : null
+  }
+
+  get lines() {
+    const b = this.measured
+    return b ? Math.max(1, Math.round((b[3]! - b[1]!) / (this.size * this.lineHeight))) : 1
+  }
+
+  /** Block width in world units. */
+  get width() {
+    const b = this.measured
+    return b ? b[2]! - b[0]! : this.estWidth
+  }
+
+  /** Cap-top of the first line to the baseline of the last, in world units. */
+  get height() {
+    return this.size * this.lineHeight * (this.lines - 1) + this.size * 0.72
+  }
+
+  /** Measure the text on one line, then wrap it at an even share of that width. */
+  private balanced(l: FlatLayout) {
+    const max = l.maxWidth!
+    const lines = l.maxLines ?? Infinity
+    this.layout({ ...l, balance: false, maxWidth: undefined, maxLines: undefined }, () => {
+      const size = l.size
+      let natural = this.width
+      let fit = size
+      // too long for the allowed lines even when full: shrink first
+      if (natural > max * lines * 0.97) {
+        fit = size * ((max * lines * 0.97) / natural)
+        natural *= fit / size
+      }
+      const n = Math.max(1, Math.ceil(natural / max))
+      this.layout({ ...l, balance: false, size: fit, maxWidth: n === 1 ? max : Math.min(max, (natural / n) * 1.1) })
     })
   }
 
@@ -119,7 +169,7 @@ export class FlatText {
     this.text.fillOpacity = a
     this.text.outlineOpacity = a
     this.halo.outlineOpacity = a * (this.haloOpacity + (0.9 - this.haloOpacity) * this.glowK)
-    const dy = motion ? ((1 - ease(inAmt)) * -0.45 + ease(outAmt) * 0.35) * this.size : 0
+    const dy = motion ? ((1 - ease(inAmt)) * -0.45 + ease(outAmt) * 0.35) * (this.drift ?? this.size) : 0
     this.text.position.y = dy
     this.halo.position.y = dy
     this.group.visible = a > 0.003

@@ -8,7 +8,7 @@ import { roles } from '~/data/content'
   <TextBlock :range="T.work" label="Work Experience" class="work">
     <h2 class="work-title ghost headline">Work Experience</h2>
     <ul class="sr-only">
-      <li v-for="(r, i) in roles" :key="i">{{ r.role }}, {{ r.company }}, {{ r.line }}</li>
+      <li v-for="(r, i) in roles" :key="i">{{ r.role }}, {{ r.company }}, {{ r.line }}: {{ r.blurb }}</li>
     </ul>
   </TextBlock>
 </template>
