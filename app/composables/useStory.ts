@@ -12,6 +12,8 @@ export const ui = reactive({
   reduced: false,
   /** Sound is on by default; it starts at the first click, tap or keypress (see SoundToggle). */
   sound: true,
+  /** The visitor has clicked in: scrolling is unlocked and the soundscape is playing. */
+  entered: false,
   /** Set once the visitor nears the campfire, so album images load lazily. */
   albumsNear: false,
   /** An album is open full-screen (the nav steps aside). */
