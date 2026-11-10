@@ -12,6 +12,13 @@
   font-display: swap;
   src: url('/fonts/redaction-50-400.woff2') format('woff2');
 }
+@font-face {
+  font-family: 'Redaction 50';
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+  src: url('/fonts/redaction-50-400-italic.woff2') format('woff2');
+}
 
 :root {
   --font-display: 'Redaction 50', ui-serif, Georgia, serif;
@@ -19,7 +26,7 @@
   --font: 'Redaction 50', ui-serif, Georgia, serif;
   --font-carved: ui-serif, 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
   --ink: #ffffff;
-  --card: #fbf5ea;
+  --card: #efe5d0;
   --card-ink: #2a1d14;
   --focus: #ffd27a;
   color-scheme: light;

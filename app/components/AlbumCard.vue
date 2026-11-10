@@ -44,6 +44,9 @@ function go(dir: number, from?: HTMLElement) {
   void nextTick(develop)
 }
 
+/** The prints are old: a little faded and warm. The develop effect settles on this, not on a crisp photo. */
+const AGED = 'sepia(0.22) saturate(0.82) contrast(0.94) brightness(1.03)'
+
 /** The one signature effect: the new photo develops in from a warm haze. */
 function develop() {
   const img = root.value?.querySelector<HTMLElement>('.photo.current video') ?? root.value?.querySelector<HTMLElement>('.photo.current img')
@@ -54,7 +57,7 @@ function develop() {
   }
   animate(haze.value, { opacity: [0.85, 0], duration: 420, ease: 'outQuad' })
   animate(img, {
-    filter: ['sepia(0.7) saturate(0.35) brightness(1.3) contrast(0.8)', 'sepia(0) saturate(1) brightness(1) contrast(1)'],
+    filter: ['sepia(0.7) saturate(0.35) brightness(1.3) contrast(0.8)', AGED],
     duration: 420,
     ease: 'outQuad',
   })
@@ -191,10 +194,10 @@ defineExpose({ root })
       <span ref="haze" class="haze" aria-hidden="true" />
       <template v-if="!compact">
         <button type="button" class="arrow prev" :aria-label="`Previous ${name} photo`" @click.stop="go(-1, $event.currentTarget as HTMLElement)">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.8 2.6 18.8 5.6 12.4 12 18.8 18.4 15.8 21.4 6.4 12Z" fill="currentColor" /></svg>
         </button>
         <button type="button" class="arrow next" :aria-label="`Next ${name} photo`" @click.stop="go(1, $event.currentTarget as HTMLElement)">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.2 2.6 5.2 5.6 11.6 12 5.2 18.4 8.2 21.4 17.6 12Z" fill="currentColor" /></svg>
         </button>
       </template>
     </component>
@@ -216,12 +219,19 @@ defineExpose({ root })
   --fire-dy: 0;
   position: relative;
   width: var(--card-w, 220px);
-  padding: 9px 9px 0;
-  border-radius: 6px;
-  background: var(--card);
+  padding: 10px 10px 0;
+  /* an old instant print: square corners, aged cream stock with a faint grain, yellowed toward the edges */
+  border-radius: 1px;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.27 0 0 0 0 0.16 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)' opacity='0.35'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at 50% 45%, rgba(255, 251, 240, 0.55), transparent 72%),
+    var(--card);
   color: var(--card-ink);
   box-shadow:
-    0 12px 28px rgba(0, 0, 0, 0.38),
+    inset 0 0 14px rgba(150, 105, 45, 0.28),
+    inset 0 0 0 1px rgba(120, 90, 50, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 10px 22px rgba(0, 0, 0, 0.4),
     calc(var(--fire-dx) * 14px) calc(var(--fire-dy) * 14px) 30px rgba(255, 120, 40, calc(var(--fire) * 0.42));
   text-align: left;
   transform-origin: 50% 60%;
@@ -243,7 +253,7 @@ defineExpose({ root })
   aspect-ratio: 4 / 5;
   padding: 0;
   border: 0;
-  border-radius: 2px;
+  border-radius: 0;
   overflow: hidden;
   background: #2a2420;
   touch-action: pan-y;
@@ -266,6 +276,17 @@ button.album-window {
 .photo.clip {
   object-fit: cover;
   display: block;
+  filter: sepia(0.22) saturate(0.82) contrast(0.94) brightness(1.03);
+}
+/* a soft vignette and a hairline where the photo meets the paper */
+.album-window::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: radial-gradient(ellipse at 50% 48%, transparent 58%, rgba(45, 28, 12, 0.32) 100%);
+  box-shadow: inset 0 0 0 1px rgba(40, 25, 10, 0.25), inset 0 0 6px rgba(40, 25, 10, 0.3);
+  pointer-events: none;
 }
 .photo.clip {
   /* above its poster, under the developing haze */
@@ -298,25 +319,27 @@ button.album-window {
   position: absolute;
   z-index: 4;
   top: 50%;
-  width: 40px;
+  width: 34px;
   height: 40px;
   margin-top: -20px;
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: 999px;
-  background: rgba(24, 16, 10, 0.62);
-  color: #fff;
+  border-radius: 2px;
+  /* a scrap of the same paper, with an inked chevron */
+  background: rgba(239, 229, 208, 0.88);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  color: #4a3b30;
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.2s ease, background 0.2s ease;
 }
 .arrow svg {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
 }
 .arrow:hover {
-  background: rgba(24, 16, 10, 0.82);
+  background: rgba(247, 240, 224, 0.96);
 }
 .arrow.prev {
   left: 6px;
@@ -342,14 +365,20 @@ button.album-window {
   padding: 0.7rem 0.25rem 0.85rem;
   min-height: 3.4rem;
 }
+/* the label is inked onto the strip by hand */
 .album-name {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.05rem;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.15rem;
+  color: #3b2c22;
+  transform: rotate(-1.2deg);
+  transform-origin: left center;
 }
 .album-count {
+  font-style: italic;
   font-size: 0.85rem;
-  color: #5a4637;
+  color: #6a5444;
   font-variant-numeric: tabular-nums;
 }
 .album.compact {

@@ -14,13 +14,14 @@ import { earth } from '~/data/content'
 .earth-copy {
   position: absolute;
   /* just above the signpost's arrows */
-  top: max(25vh, 120px);
+  top: max(15vh, 84px);
   left: 0;
   right: 0;
-  width: min(820px, 90vw);
+  /* the same size as the earlier lines (.lede), wrapping to about three lines */
+  width: min(24ch, 90vw);
   margin: 0 auto;
-  font-size: clamp(1.4rem, 2.4vw, 1.85rem);
-  line-height: 1.22;
+  font-size: clamp(1.6rem, 4.2vw, 3rem);
+  line-height: 1.18;
   text-align: center;
 }
 </style>
