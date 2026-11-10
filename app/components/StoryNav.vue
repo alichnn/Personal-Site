@@ -1,37 +1,66 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { state } from '~/core/state'
 import { SECTIONS, T, sectionAt } from '~/core/timeline'
 import { flyToProgress } from '~/core/scroll'
 import { ui, useFrame } from '~/composables/useStory'
 
 // The chapter legend: a quiet, right-aligned column of small capitals in the top-right corner.
-// The current chapter is set in bold with a small solid diamond in the margin beside it. It appears with the hero greeting and
-// fades away when the visitor has been still for a few seconds, returning on any movement.
+// The current chapter is set in bold with a small solid diamond in the margin beside it. It shows for a
+// few seconds when the hero greeting appears (so visitors know it's there), then stays out of the way
+// until the cursor comes near the top-right corner, or it has focus. Touch screens have no cursor, so
+// there it appears with any touch or scroll and fades after a few seconds of stillness.
 
+const RADIUS = 480 // about 3.5 times the sound button's reach
+const HINT_MS = 4500
 const IDLE_MS = 3000
-const ACTIVITY = ['pointermove', 'pointerdown', 'wheel', 'touchstart', 'keydown', 'scroll'] as const
+const TOUCH_ACTIVITY = ['touchstart', 'scroll'] as const
 
 const active = ref(0)
 const inStory = ref(false)
-const awake = ref(true)
+const nav = ref<HTMLElement | null>(null)
+/** Cursor within reach of the corner. */
+const near = ref(false)
+/** The first-appearance hint, or recent touch activity. */
+const awake = ref(false)
 /** Pointer over the legend or keyboard focus inside it: never fade then. */
 const engaged = ref(false)
 let timer: ReturnType<typeof setTimeout> | null = null
+let touch = matchMedia('(hover: none)').matches
 
-function wake() {
+function wakeFor(ms: number) {
   awake.value = true
   if (timer) clearTimeout(timer)
-  timer = setTimeout(() => (awake.value = false), IDLE_MS)
+  timer = setTimeout(() => (awake.value = false), ms)
+}
+function onMove(e: PointerEvent) {
+  if (e.pointerType === 'touch') return
+  touch = false
+  const r = nav.value?.getBoundingClientRect()
+  if (!r) return
+  near.value = Math.hypot(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2)) < RADIUS
+}
+function onTouchActivity() {
+  if (touch) wakeFor(IDLE_MS)
 }
 
 onMounted(() => {
-  for (const e of ACTIVITY) addEventListener(e, wake, { passive: true, capture: true })
-  wake()
+  addEventListener('pointermove', onMove, { passive: true })
+  for (const e of TOUCH_ACTIVITY) addEventListener(e, onTouchActivity, { passive: true, capture: true })
 })
 onBeforeUnmount(() => {
-  for (const e of ACTIVITY) removeEventListener(e, wake, { capture: true })
+  removeEventListener('pointermove', onMove)
+  for (const e of TOUCH_ACTIVITY) removeEventListener(e, onTouchActivity, { capture: true })
   if (timer) clearTimeout(timer)
+})
+
+// the first time the legend becomes available, show it briefly
+let hinted = false
+watch(inStory, (on, was) => {
+  if (on && !was && !hinted) {
+    hinted = true
+    wakeFor(HINT_MS)
+  }
 })
 
 useFrame(() => {
@@ -49,8 +78,9 @@ function go(i: number) {
 
 <template>
   <nav
+    ref="nav"
     class="legend"
-    :class="{ shown: inStory && !ui.albumOpen && (awake || engaged) }"
+    :class="{ shown: inStory && !ui.albumOpen && (near || awake || engaged) }"
     aria-label="Sections"
     @pointerenter="engaged = true"
     @pointerleave="engaged = false"
