@@ -64,12 +64,16 @@ const COMPANY_STYLE: FlatStyle = { ...ROLE_STYLE, color: '#a8efe1' }
 const BLURB_STYLE: FlatStyle = { font: CAPTION_FONT, color: '#d6f3ec', outline: '#0a3436', outlineWidth: 0.05, halo: '#04201f', haloOpacity: 0.55, letterSpacing: 0.01 }
 /** Space after each role line (title, company, one-liner), in CSS px at the pad's distance. */
 const ROLE_GAPS = [12, 12, 0]
-const CONTACT_STYLE: FlatStyle = { color: '#c3cdf2', outline: '#0d1a4a', halo: '#02051a', haloOpacity: 0.6 }
+/** Starlight: as bright as it can be while staying just under the night bloom (which would smear bold
+ *  letters), with a deep-blue halo to keep the edges crisp. Hovering still lights them up fully. */
+const CONTACT_STYLE: FlatStyle = { font: HEADLINE_FONT, color: '#c9d2f4', outline: '#0d1a4a', outlineWidth: 0.05, halo: '#0a1440', haloOpacity: 0.55 }
 
 /** Every character the flat text needs, so the font's glyph atlas is ready before the first reveal. */
 /** Characters each headline font needs, read from the ghost text. */
 const charsFor = (font: string) => GHOSTS.filter((g) => g.style.font === font).map((g) => document.querySelector(g.sel)?.textContent ?? '').join('')
-const FLAT_CHARS = [people, goal, earth, about, ...roles.flatMap((r) => [r.role, r.company, r.line]), ...contacts.map((c) => c.label)].join('')
+const FLAT_CHARS = [people, goal, earth, about, ...roles.flatMap((r) => [r.role, r.company, r.line])].join('')
+/** The contact words are set in the bold headline font. */
+const CONTACT_CHARS = contacts.map((c) => c.label).join('')
 
 export class Words implements WorldModule {
   range: [number, number] = [0, 1]
@@ -88,7 +92,7 @@ export class Words implements WorldModule {
   async build(w: World) {
     await Promise.all([
       new Promise<void>((resolve) => preloadFont({ font: FLAT_FONT, characters: FLAT_CHARS }, resolve)),
-      ...[HEADLINE_FONT, HERO_FONT].map((font) => new Promise<void>((resolve) => preloadFont({ font, characters: charsFor(font) }, resolve))),
+      ...[HEADLINE_FONT, HERO_FONT].map((font) => new Promise<void>((resolve) => preloadFont({ font, characters: charsFor(font) + CONTACT_CHARS }, resolve))),
       new Promise<void>((resolve) => preloadFont({ font: CAPTION_FONT, characters: roles.map((r) => r.blurb).join('') }, resolve)),
     ])
     // the HTML ghost layout uses the same fonts; wait for them so the measurements match

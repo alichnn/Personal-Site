@@ -44,9 +44,6 @@ function go(dir: number, from?: HTMLElement) {
   void nextTick(develop)
 }
 
-/** The prints are old: a little faded and warm. The develop effect settles on this, not on a crisp photo. */
-const AGED = 'sepia(0.22) saturate(0.82) contrast(0.94) brightness(1.03)'
-
 /** The one signature effect: the new photo develops in from a warm haze. */
 function develop() {
   const img = root.value?.querySelector<HTMLElement>('.photo.current video') ?? root.value?.querySelector<HTMLElement>('.photo.current img')
@@ -57,7 +54,7 @@ function develop() {
   }
   animate(haze.value, { opacity: [0.85, 0], duration: 420, ease: 'outQuad' })
   animate(img, {
-    filter: ['sepia(0.7) saturate(0.35) brightness(1.3) contrast(0.8)', AGED],
+    filter: ['sepia(0.7) saturate(0.35) brightness(1.3) contrast(0.8)', 'sepia(0) saturate(1) brightness(1) contrast(1)'],
     duration: 420,
     ease: 'outQuad',
   })
@@ -255,7 +252,7 @@ defineExpose({ root })
   border: 0;
   border-radius: 0;
   overflow: hidden;
-  background: #2a2420;
+  background: #e3d7bf;
   touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
@@ -276,17 +273,6 @@ button.album-window {
 .photo.clip {
   object-fit: cover;
   display: block;
-  filter: sepia(0.22) saturate(0.82) contrast(0.94) brightness(1.03);
-}
-/* a soft vignette and a hairline where the photo meets the paper */
-.album-window::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  background: radial-gradient(ellipse at 50% 48%, transparent 58%, rgba(45, 28, 12, 0.32) 100%);
-  box-shadow: inset 0 0 0 1px rgba(40, 25, 10, 0.25), inset 0 0 6px rgba(40, 25, 10, 0.3);
-  pointer-events: none;
 }
 .photo.clip {
   /* above its poster, under the developing haze */

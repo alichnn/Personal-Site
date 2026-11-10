@@ -46,7 +46,7 @@ function glow(e: Event, on: boolean) {
         <a
           ref="links"
           class="star-link"
-          :class="side[i]"
+          :class="[side[i], { top: c.star % 2 === 0 }]"
           :href="c.href"
           :target="c.href.startsWith('http') ? '_blank' : undefined"
           :rel="c.href.startsWith('http') ? 'noopener' : undefined"
@@ -92,9 +92,11 @@ function glow(e: Event, on: boolean) {
 }
 .star-label {
   position: absolute;
-  top: -0.8em;
+  top: -0.72em;
   white-space: nowrap;
-  font-size: clamp(1.15rem, 2vw, 1.45rem);
+  /* bold and about 40% larger than before, so each reads like a small heading beside its star */
+  font-size: clamp(1.6rem, 2.8vw, 2.05rem);
+  font-weight: 700;
   padding: 0.25rem 0.6rem;
   border-radius: 999px;
 }
@@ -110,8 +112,15 @@ function glow(e: Event, on: boolean) {
   .star-link.right .star-label {
     left: 50%;
     right: auto;
-    top: 16px;
+    top: 14px;
+    font-size: 1.45rem;
     transform: translateX(-50%);
+  }
+  /* the top stars (the A's apex and the C's upper tip) have lines running down from them, so their
+     labels sit above the star instead */
+  .star-link.top .star-label {
+    top: auto;
+    bottom: 14px;
   }
 }
 .star-link:focus-visible .star-label {
