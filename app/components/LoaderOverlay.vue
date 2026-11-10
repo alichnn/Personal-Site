@@ -133,7 +133,7 @@ useFrame(() => {
   border: 0;
   background: none;
   padding: 1rem 1.5rem;
-  /* white, ringed in navy so it holds against the bright clouds */
+  /* white, ringed in the dusty blue of the cloud shadows: soft against the sky, still clear */
   color: #fff;
   font-family: var(--font);
   font-size: clamp(1.15rem, 1.6vw, 1.45rem);
@@ -144,8 +144,8 @@ useFrame(() => {
   white-space: nowrap;
   text-transform: uppercase;
   text-shadow:
-    0 0 1px #0e2547, 0 0 2px #0e2547, 1px 1px 0 #0e2547, -1px -1px 0 #0e2547, 1px -1px 0 #0e2547, -1px 1px 0 #0e2547,
-    0 2px 6px rgba(14, 37, 71, 0.7), 0 0 22px rgba(14, 37, 71, 0.55);
+    0 0 1px #5a7fae, 0.6px 0.6px 0 #5a7fae, -0.6px -0.6px 0 #5a7fae, 0.6px -0.6px 0 #5a7fae, -0.6px 0.6px 0 #5a7fae,
+    0 1px 4px rgba(70, 104, 150, 0.55), 0 0 18px rgba(90, 127, 174, 0.5);
   cursor: pointer;
   animation: breathe 3.2s ease-in-out infinite;
   transition: color 0.3s ease;

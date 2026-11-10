@@ -6,7 +6,7 @@ import { flyToProgress } from '~/core/scroll'
 import { ui, useFrame } from '~/composables/useStory'
 
 // The chapter legend: a quiet, right-aligned column of small capitals in the top-right corner.
-// The current chapter is set in bold with a fine dash in the margin beside it. It appears with the hero greeting and
+// The current chapter is set in bold with a small solid diamond in the margin beside it. It appears with the hero greeting and
 // fades away when the visitor has been still for a few seconds, returning on any movement.
 
 const IDLE_MS = 3000
@@ -111,19 +111,21 @@ button {
   cursor: pointer;
   transition: color 0.3s ease;
 }
-/* the fine dash sits in the right margin, so the words never shift and the dashes line up */
+/* a small diamond in the right margin, like a printer's mark: the words never shift and the marks line up */
 button::before {
   content: '';
   position: absolute;
-  left: calc(100% + 10px);
+  left: calc(100% + 11px);
   top: 50%;
-  width: 16px;
-  height: 1px;
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  box-sizing: border-box;
+  border: 1.5px solid currentColor;
   background: currentColor;
-  box-shadow: 0 0 6px rgba(10, 14, 34, 0.4);
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform 0.35s ease;
+  box-shadow: 0 0 6px rgba(10, 14, 34, 0.35);
+  transform: rotate(45deg) scale(0);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease;
 }
 button:hover {
   color: rgba(246, 238, 221, 0.68);
@@ -133,13 +135,12 @@ button.active {
   color: rgba(246, 238, 221, 0.75);
 }
 button.active::before {
-  transform: scaleX(1);
+  transform: rotate(45deg) scale(1);
 }
-button:hover::before {
-  transform: scaleX(0.55);
-}
-button.active:hover::before {
-  transform: scaleX(1);
+/* hovering another chapter shows a hollow diamond */
+button:not(.active):hover::before {
+  background-color: transparent;
+  transform: rotate(45deg) scale(0.9);
 }
 button:focus-visible {
   outline: 2px solid var(--focus);
