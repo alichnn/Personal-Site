@@ -92,9 +92,8 @@ export class Words implements WorldModule {
     ])
     // the HTML ghost layout uses the same fonts; wait for them so the measurements match
     await Promise.all([
-      document.fonts?.load('700 16px "Redaction"'),
       document.fonts?.load('700 16px "Redaction 50"'),
-      document.fonts?.load('400 16px "Redaction 20"'),
+      document.fonts?.load('400 16px "Redaction 50"'),
     ]).catch(() => {})
     this.layoutAll(w)
   }

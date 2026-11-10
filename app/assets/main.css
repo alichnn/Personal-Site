@@ -1,15 +1,9 @@
-/* Redaction (OFL): the textured 50 for the hero, clean Bold for the other headlines, 20 for everything else. */
+/* Redaction 50 (OFL), the textured cut: Bold for the hero and headlines, Regular for everything else. */
 @font-face {
   font-family: 'Redaction 50';
   font-weight: 700;
   font-display: swap;
   src: url('/fonts/redaction-50-700.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Redaction';
-  font-weight: 700;
-  font-display: swap;
-  src: url('/fonts/redaction-700.woff2') format('woff2');
 }
 /* Cormorant Garamond (OFL), for the chapter legend. */
 @font-face {
@@ -25,15 +19,15 @@
   src: url('/fonts/cormorant-garamond-700.woff2') format('woff2');
 }
 @font-face {
-  font-family: 'Redaction 20';
+  font-family: 'Redaction 50';
   font-weight: 400;
   font-display: swap;
-  src: url('/fonts/redaction-20-400.woff2') format('woff2');
+  src: url('/fonts/redaction-50-400.woff2') format('woff2');
 }
 
 :root {
-  --font-display: 'Redaction 20', ui-serif, Georgia, serif;
-  --font-headline: 'Redaction', ui-serif, Georgia, serif;
+  --font-display: 'Redaction 50', ui-serif, Georgia, serif;
+  --font-headline: 'Redaction 50', ui-serif, Georgia, serif;
   --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-carved: ui-serif, 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
   --ink: #ffffff;

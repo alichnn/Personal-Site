@@ -93,7 +93,7 @@ export interface SignArrow {
  * The grain and lettering are painted into each plank's texture, so they stay crisp and cost
  * nothing extra to draw.
  */
-export async function makeSignpost(arrows: SignArrow[], font = '"Redaction", Georgia, serif') {
+export async function makeSignpost(arrows: SignArrow[], font = '"Redaction 50", Georgia, serif') {
   await document.fonts?.load(`700 64px ${font}`).catch(() => {})
   const root = new Group()
   const r = rng(5)

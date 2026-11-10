@@ -3,6 +3,7 @@ import { animate } from 'animejs'
 import { computed, nextTick, ref, watch } from 'vue'
 import { PHOTO_WIDTHS, type Album } from '~/data/albums'
 import { ui } from '~/composables/useStory'
+import { soundscape } from '~/core/audio'
 
 const props = defineProps<{
   album: Album
@@ -36,6 +37,7 @@ const sizes = computed(() => (props.compact ? '30vw' : '(max-width: 640px) 80vw,
 function go(dir: number, from?: HTMLElement) {
   if (n.value < 2) return
   index.value = wrap(index.value + dir)
+  soundscape.flick(dir > 0 ? 1 : -1)
   const photo = props.album.photos[index.value]!
   live.value = `${props.album.name} photo ${index.value + 1} of ${n.value}: ${photo.alt}`
   if (from) embers(from)

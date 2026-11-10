@@ -5,13 +5,14 @@ import { Text } from 'troika-three-text'
 // that isn't a big 3D headline. A crisp outline sits on the glyph edge, and a soft blurred halo
 // behind it keeps the words readable over busy clouds, grass and water.
 
-export const FLAT_FONT = '/fonts/redaction-20-400.woff'
+/** Redaction 50 Regular (the textured cut): every sentence, role line and label. */
+export const FLAT_FONT = '/fonts/redaction-50-400.woff'
 /** Redaction 50 Bold (the textured cut), for the hero greeting. */
 export const HERO_FONT = '/fonts/redaction-50-700.woff'
-/** Clean (un-eroded) Redaction Bold, for the section headlines. */
-export const HEADLINE_FONT = '/fonts/redaction-700.woff'
-/** Cormorant Garamond SemiBold Italic, for the quiet one-line captions under the roles. */
-export const CAPTION_FONT = '/fonts/cormorant-garamond-600-italic.woff'
+/** Section headlines share the hero's Redaction 50 Bold. */
+export const HEADLINE_FONT = HERO_FONT
+/** Redaction 50 Italic, for the quiet one-line captions under the roles. */
+export const CAPTION_FONT = '/fonts/redaction-50-400-italic.woff'
 
 export interface FlatLayout {
   /** Font size in world units. */
@@ -41,7 +42,7 @@ export interface FlatStyle {
   /** Halo spread and softness, as fractions of the font size. */
   haloWidth?: number
   haloBlur?: number
-  /** Font file (defaults to Redaction 20). */
+  /** Font file (defaults to Redaction 50 Regular). */
   font?: string
   /** Extra tracking, as a fraction of the font size. */
   letterSpacing?: number

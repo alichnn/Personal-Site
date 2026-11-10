@@ -56,8 +56,8 @@ individual quality settings.
 - `app/scenes/*`: one module per part of the world. Each has a progress `range`, a `build()`
   and an `update()`.
 - `app/scenes/words.ts`: all story text, floating in the world as crisp SDF text with an outline
-  and soft halo (`app/core/flattext.ts`): the hero greeting in Redaction 50, the other headlines
-  in Redaction Bold, everything else in Redaction 20. Each line also exists as invisible "ghost" HTML in the same layout, for
+  and soft halo (`app/core/flattext.ts`): the hero greeting and headlines
+  in Redaction 50 Bold, everything else in Redaction 50 Regular (Italic for the role one-liners). Each line also exists as invisible "ghost" HTML in the same layout, for
   screen readers, search and keyboard focus; the module measures each ghost's box at its section's
   resting camera pose and places the letters there. To restyle a line, edit its CSS (size,
   position, wrap width) and the world text follows.

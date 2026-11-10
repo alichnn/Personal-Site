@@ -206,6 +206,45 @@ class Soundscape {
     }
   }
 
+  /**
+   * A polaroid arrow: a soft papery flick, like sliding one print off a stack, then the faint tap
+   * of it landing. It sweeps up for "next" and down for "previous". Silent when sound is off.
+   */
+  flick(dir: 1 | -1) {
+    const ctx = this.ctx
+    if (!this.enabled || !ctx || ctx.state !== 'running') return
+    const t = ctx.currentTime + 0.005
+    const [from, to] = dir > 0 ? [1700, 4200] : [3600, 1500]
+    // the slide: band-passed noise swept across the band
+    const s = ctx.createBufferSource()
+    s.buffer = this.white
+    const bp = ctx.createBiquadFilter()
+    bp.type = 'bandpass'
+    bp.Q.value = 1.3
+    bp.frequency.setValueAtTime(from, t)
+    bp.frequency.exponentialRampToValueAtTime(to, t + 0.07)
+    const g = this.env(t, 0.2, 0.012, 0.075)
+    s.connect(bp).connect(g).connect(this.master)
+    s.start(t, Math.random() * 2.5, 0.12)
+    // the landing: a dull, quiet tap
+    const land = t + 0.06
+    const s2 = ctx.createBufferSource()
+    s2.buffer = this.white
+    const lp = ctx.createBiquadFilter()
+    lp.type = 'lowpass'
+    lp.frequency.value = 900
+    const g2 = this.env(land, 0.14, 0.002, 0.03)
+    s2.connect(lp).connect(g2).connect(this.master)
+    s2.start(land, Math.random() * 2.5, 0.05)
+    const o = ctx.createOscillator()
+    o.frequency.setValueAtTime(190, land)
+    o.frequency.exponentialRampToValueAtTime(120, land + 0.05)
+    const g3 = this.env(land, 0.07, 0.002, 0.05)
+    o.connect(g3).connect(this.master)
+    o.start(land)
+    o.stop(land + 0.08)
+  }
+
   private env(t: number, peak: number, attack: number, decay: number) {
     const g = this.ctx!.createGain()
     g.gain.setValueAtTime(0, t)
