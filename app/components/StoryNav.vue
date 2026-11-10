@@ -11,7 +11,7 @@ import { ui, useFrame } from '~/composables/useStory'
 // until the cursor comes near the top-right corner, or it has focus. Touch screens have no cursor, so
 // there it appears with any touch or scroll and fades after a few seconds of stillness.
 
-const RADIUS = 480 // about 3.5 times the sound button's reach
+const RADIUS = 400 // about 3 times the sound button's reach
 const HINT_MS = 4500
 const IDLE_MS = 3000
 const TOUCH_ACTIVITY = ['touchstart', 'scroll'] as const
