@@ -16,11 +16,8 @@ None imported. The ambient soundscape is synthesised at runtime with the Web Aud
 All photos are © Alice Chen.
 
 ## Fonts
-[Redaction](https://www.redaction.us) (Redaction 50: Bold for the hero and headlines, Regular and Italic for other text),
+[Redaction](https://www.redaction.us) (Redaction 50, used for all text: Bold, Regular and Italic),
 © 2019 MCKL Inc., SIL Open Font License 1.1 (`public/fonts/OFL.txt`), via Fontsource.
-[Cormorant Garamond](https://github.com/CatharsisFonts/Cormorant) (the chapter legend),
-SIL Open Font License 1.1 (`public/fonts/OFL-cormorant-garamond.txt`), via Fontsource.
-UI chrome uses the system font stack.
 
 ## Libraries
 - [Nuxt](https://nuxt.com) / [Vue](https://vuejs.org): MIT

@@ -1,22 +1,10 @@
-/* Redaction 50 (OFL), the textured cut: Bold for the hero and headlines, Regular for everything else. */
+/* Redaction 50 (OFL), the textured cut, is the site's only typeface: Bold for the hero, headlines and
+   accents, Regular for everything else. */
 @font-face {
   font-family: 'Redaction 50';
   font-weight: 700;
   font-display: swap;
   src: url('/fonts/redaction-50-700.woff2') format('woff2');
-}
-/* Cormorant Garamond (OFL), for the chapter legend. */
-@font-face {
-  font-family: 'Cormorant Garamond';
-  font-weight: 500;
-  font-display: swap;
-  src: url('/fonts/cormorant-garamond-500.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Cormorant Garamond';
-  font-weight: 700;
-  font-display: swap;
-  src: url('/fonts/cormorant-garamond-700.woff2') format('woff2');
 }
 @font-face {
   font-family: 'Redaction 50';
@@ -28,7 +16,7 @@
 :root {
   --font-display: 'Redaction 50', ui-serif, Georgia, serif;
   --font-headline: 'Redaction 50', ui-serif, Georgia, serif;
-  --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font: 'Redaction 50', ui-serif, Georgia, serif;
   --font-carved: ui-serif, 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
   --ink: #ffffff;
   --card: #fbf5ea;

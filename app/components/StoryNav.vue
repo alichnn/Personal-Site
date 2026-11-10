@@ -97,10 +97,10 @@ button {
   padding: 0.2rem 0;
   background: none;
   /* translucent ivory: present but quiet; the current chapter a little stronger */
-  color: rgba(246, 238, 221, 0.4);
-  font-family: 'Cormorant Garamond', 'Cormorant', Garamond, 'Times New Roman', serif;
-  font-size: 0.98rem;
-  font-weight: 500;
+  color: rgba(246, 238, 221, 0.5);
+  font-family: var(--font);
+  font-size: 0.92rem;
+  font-weight: 400;
   line-height: 1.2;
   letter-spacing: 0.24em;
   text-transform: uppercase;
@@ -126,11 +126,11 @@ button::before {
   transition: transform 0.35s ease;
 }
 button:hover {
-  color: rgba(246, 238, 221, 0.55);
+  color: rgba(246, 238, 221, 0.68);
 }
 button.active {
   font-weight: 700;
-  color: rgba(246, 238, 221, 0.6);
+  color: rgba(246, 238, 221, 0.75);
 }
 button.active::before {
   transform: scaleX(1);
@@ -151,7 +151,7 @@ button:focus-visible {
     right: max(32px, env(safe-area-inset-right));
   }
   button {
-    font-size: 0.86rem;
+    font-size: 0.82rem;
     letter-spacing: 0.2em;
   }
 }

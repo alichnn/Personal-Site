@@ -133,17 +133,19 @@ useFrame(() => {
   border: 0;
   background: none;
   padding: 1rem 1.5rem;
-  /* white, with a soft navy halo so it still reads against the bright clouds */
-  color: rgba(255, 255, 255, 0.92);
-  font-family: 'Cormorant Garamond', 'Cormorant', Garamond, 'Times New Roman', serif;
+  /* white, ringed in navy so it holds against the bright clouds */
+  color: #fff;
+  font-family: var(--font);
   font-size: clamp(1.15rem, 1.6vw, 1.45rem);
-  font-weight: 500;
+  font-weight: 700;
   letter-spacing: 0.45em;
   /* balance the trailing letter-space so the words sit truly centred */
   text-indent: 0.45em;
   white-space: nowrap;
   text-transform: uppercase;
-  text-shadow: 0 0 1px rgba(23, 52, 94, 0.55), 0 1px 3px rgba(23, 52, 94, 0.4), 0 0 20px rgba(23, 52, 94, 0.45);
+  text-shadow:
+    0 0 1px #0e2547, 0 0 2px #0e2547, 1px 1px 0 #0e2547, -1px -1px 0 #0e2547, 1px -1px 0 #0e2547, -1px 1px 0 #0e2547,
+    0 2px 6px rgba(14, 37, 71, 0.7), 0 0 22px rgba(14, 37, 71, 0.55);
   cursor: pointer;
   animation: breathe 3.2s ease-in-out infinite;
   transition: color 0.3s ease;
@@ -156,7 +158,7 @@ useFrame(() => {
   outline-offset: 4px;
 }
 @keyframes breathe {
-  0%, 100% { opacity: 0.75; }
+  0%, 100% { opacity: 0.82; }
   50% { opacity: 1; }
 }
 .scroll-hint {
@@ -169,7 +171,7 @@ useFrame(() => {
   justify-items: center;
   gap: 0.15rem;
   color: #17345e;
-  font-family: 'Cormorant Garamond', 'Cormorant', Garamond, 'Times New Roman', serif;
+  font-family: var(--font);
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.3em;
