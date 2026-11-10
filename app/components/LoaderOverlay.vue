@@ -71,7 +71,16 @@ useFrame(() => {
   </div>
   <div ref="hint" class="scroll-hint" aria-hidden="true">
     <span>Scroll</span>
-    <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+    <!-- a chunky chevron with blunt, squared ends, its edge roughened like the Redaction 50 lettering -->
+    <svg viewBox="0 0 24 24">
+      <defs>
+        <filter id="scroll-ink" x="-20%" y="-20%" width="140%" height="140%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="2" seed="7" result="grain" />
+          <feDisplacementMap in="SourceGraphic" in2="grain" scale="2.4" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+      </defs>
+      <path d="M2.6 8.2 5.6 5.2 12 11.6 18.4 5.2 21.4 8.2 12 17.6Z" fill="currentColor" filter="url(#scroll-ink)" />
+    </svg>
   </div>
 </template>
 
@@ -170,7 +179,8 @@ useFrame(() => {
   display: grid;
   justify-items: center;
   gap: 0.15rem;
-  color: #17345e;
+  /* warm stone grey, like faded print ink */
+  color: #5f5a57;
   font-family: var(--font);
   font-size: 1rem;
   font-weight: 700;
@@ -181,8 +191,8 @@ useFrame(() => {
   pointer-events: none;
 }
 .scroll-hint svg {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   animation: nudge 1.8s ease-in-out infinite;
 }
 @keyframes nudge {
