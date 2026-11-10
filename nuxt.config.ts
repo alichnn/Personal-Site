@@ -16,7 +16,13 @@ export default defineNuxtConfig({
         { property: 'og:description', content: 'A scroll through air, earth, water and fire.' },
         { property: 'og:url', content: 'https://alicechen.art' },
       ],
-      link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+      // the constellation icon: SVG where supported, PNG/ICO for Safari, Google and older browsers
+      link: [
+        { rel: 'icon', href: '/favicon.ico', sizes: '48x48' },
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+      ],
     },
   },
   css: ['~/assets/main.css'],
