@@ -130,7 +130,8 @@ function trapTab(e: KeyboardEvent) {
       <button ref="closeBtn" type="button" class="icon-btn modal-close" aria-label="Close album" @click="close">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></svg>
       </button>
-      <AlbumCard :album="albums[expanded]!" :tilt="0" class="modal-card" />
+      <!-- `load` must be passed: Vue reads a missing boolean prop as false, which would show no photos -->
+      <AlbumCard :album="albums[expanded]!" :tilt="0" :load="true" class="modal-card" />
     </div>
   </TextBlock>
 </template>
