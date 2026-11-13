@@ -49,7 +49,12 @@ async function variants(input, dir, slug, ratio, widths, formats, q = { avif: 52
         const left = Math.max(0, Math.min(W - cw, Math.round(fx * W - cw / 2)))
         img = img.extract({ left, top: 0, width: cw, height: H }).resize(w, h)
       } else img = img.resize(w, h, { fit: 'cover', position: sharp.strategy.attention })
-      await (fmt === 'avif' ? img.avif({ quality: q.avif, effort: 6 }) : img.webp({ quality: q.webp, effort: 5 })).toFile(file)
+      // AVIF must be 4:2:0 (AV1 Main profile): sharp defaults to 4:4:4 (High profile), which iPhone Safari
+      // can't decode, and it shows a blank image instead of falling back to the WebP source.
+      await (fmt === 'avif'
+        ? img.avif({ quality: q.avif, effort: 6, chromaSubsampling: '4:2:0' })
+        : img.webp({ quality: q.webp, effort: 5 })
+      ).toFile(file)
       console.log('wrote', file.replace(root, ''))
     }
   }
