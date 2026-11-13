@@ -29,6 +29,7 @@ import { G, frameHooks, state, type Tier } from './state'
 import { SCROLL_SVH, compositions, damp, storyFromScroll } from './timeline'
 import { scrollToProgress } from './scroll'
 import { groundHeight } from './layout'
+import { TEXT_LAYER } from './flattext'
 
 import { Sky } from '../scenes/sky'
 import { Clouds } from '../scenes/clouds'
@@ -122,6 +123,8 @@ export class World {
   /** White exposure flash (0..1), set by the cloud burst. */
   flash = 0
   ready = false
+  /** The scene renders below the screen's pixel density (phones), so the lettering gets its own full-res pass. */
+  private sharpText = false
 
   private opts: WorldOptions
   private raf = 0
@@ -311,8 +314,16 @@ export class World {
     const w = innerWidth, h = innerHeight
     state.width = w
     state.height = h
-    const dpr = Math.min(devicePixelRatio || 1, this.quality.dpr)
-    this.renderer.setPixelRatio(dpr)
+    const screenDpr = devicePixelRatio || 1
+    const dpr = Math.min(screenDpr, this.quality.dpr)
+    // When the scene is capped below the screen's density (a 3× phone renders at 1×), the canvas
+    // still runs at full density: the composer draws the scene at `dpr` and upscales it, then the
+    // lettering is drawn straight on top at full sharpness (see render). Otherwise one pass does all.
+    const textDpr = Math.min(screenDpr, 3)
+    this.sharpText = textDpr > dpr + 0.01
+    this.camera.layers.set(0)
+    if (!this.sharpText) this.camera.layers.enable(TEXT_LAYER)
+    this.renderer.setPixelRatio(this.sharpText ? textDpr : dpr)
     this.renderer.setSize(w, h, false)
     this.composer.setPixelRatio(dpr)
     this.composer.setSize(w, h)
@@ -440,6 +451,18 @@ export class World {
     this.bloom.threshold = threshold
     this.grade.uniforms.uFlash!.value = this.flash
     this.composer.render()
+    if (this.sharpText) {
+      // the lettering, at the canvas's full density, over the upscaled scene (it's always in front of it)
+      const r = this.renderer
+      const autoClear = r.autoClear
+      r.autoClear = false
+      r.setRenderTarget(null)
+      r.clearDepth()
+      this.camera.layers.set(TEXT_LAYER)
+      r.render(this.scene, this.camera)
+      this.camera.layers.set(0)
+      r.autoClear = autoClear
+    }
   }
 
   /** Reduced motion: freeze the current frame on a 2D canvas and fade it out over the new one. */
