@@ -18,6 +18,8 @@ export const ui = reactive({
   albumsNear: false,
   /** An album is open full-screen (the nav steps aside). */
   albumOpen: false,
+  /** A project's case study is open (the nav steps aside). */
+  projectOpen: false,
 })
 
 export function useFrame(cb: () => void) {

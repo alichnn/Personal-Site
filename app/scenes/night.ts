@@ -245,9 +245,9 @@ export class Night implements WorldModule {
     const wp = state.wp
     // the stars that become seeds leave the sky as dawn comes; the rest simply fade with the rig
     this.starMat.uniforms.uOpacity!.value = stars
-    const constellation = Math.max(bell(wp, 0.29, 0.31, 0.4, 0.43), smooth(wp, 0.95, 0.975))
+    const constellation = Math.max(bell(wp, 0.29, 0.31, 0.4, 0.43), smooth(wp, 0.975, 0.9875))
     this.cMat.uniforms.uOpacity!.value = stars * (0.35 + 0.65 * constellation)
-    const auroraAmt = Math.max(bell(wp, 0.28, 0.33, 0.39, 0.43) * 1, smooth(wp, 0.9, 0.97) * 0.6)
+    const auroraAmt = Math.max(bell(wp, 0.28, 0.33, 0.39, 0.43) * 1, smooth(wp, 0.95, 0.985) * 0.6)
     this.auroraMat.uniforms.uOpacity!.value = stars * auroraAmt * 0.32
     for (const m of this.aurora) m.visible = auroraAmt > 0.01
 

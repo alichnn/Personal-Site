@@ -2,7 +2,8 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { state } from '~/core/state'
 import { getScroll, scrollToProgress } from '~/core/scroll'
-import { SECTIONS, sectionForPath } from '~/core/timeline'
+import { LANTERN_REST, SECTIONS, sectionForPath } from '~/core/timeline'
+import { projectFromHash, projectUi } from '~/composables/useProjects'
 import { soundscape } from '~/core/audio'
 import { ui, useFrame } from '~/composables/useStory'
 
@@ -16,7 +17,9 @@ const hint = ref<HTMLElement | null>(null)
 // a link like alicechen.art/work skips the CLICK prompt and opens right at that chapter;
 // sound then starts at the visitor's first click or tap (SoundToggle)
 const linked = sectionForPath(location.pathname)
-const asking = computed(() => ui.ready && !ui.entered && linked < 0)
+// a project link (alicechen.art/#rexolve) opens at the lantern plateau with that card open
+const linkedProject = projectFromHash()
+const asking = computed(() => ui.ready && !ui.entered && linked < 0 && linkedProject < 0)
 
 function enter() {
   if (ui.entered) return
@@ -32,6 +35,11 @@ watch(
     // without WebGL there's no story to gate: just show the static page
     if (ready && document.documentElement.classList.contains('no-webgl')) {
       ui.entered = true
+    } else if (ready && linkedProject >= 0) {
+      ui.entered = true
+      getScroll()?.start()
+      scrollToProgress(LANTERN_REST, true)
+      projectUi.pending = linkedProject
     } else if (ready && linked >= 0) {
       ui.entered = true
       getScroll()?.start()

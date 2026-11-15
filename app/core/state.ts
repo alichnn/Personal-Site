@@ -24,6 +24,15 @@ export const state = {
   pointer: { ndc: new Vector2(-10, -10), x: -1, y: -1, active: false, lastMove: -10 },
   /** 0..1, raised while albums are hovered/focused so the camera holds still. */
   holdCamera: 0,
+  /** 0..1, raised while a lantern is hovered or focused, or a case study is open. */
+  lanternHold: 0,
+  /**
+   * The lanterns' HTML layer and the world share this: which lantern the pointer or focus is on,
+   * which one's case study is open, and when to flare or pulse one (state.time, -10 = never).
+   */
+  lanternUi: { hover: -1, open: -1, flareAt: -10, pulseAt: -10, pulseIndex: 0 },
+  /** 0..1 target for the blurred, darkened backdrop behind an open case study. */
+  backdrop: 0,
   /** 0..1 flicker of the campfire light, shared with the DOM cards. */
   fireFlicker: 0,
   fireScreen: { x: 0, y: 0, visible: false },

@@ -11,7 +11,7 @@ const PERCH_H = 1.45
 
 /** The bird: idles on its twig, then leads the camera from the meadow to the pond. */
 export class Bird implements WorldModule {
-  range: [number, number] = [0.4, 0.86]
+  range: [number, number] = [0.4, 0.93]
   group = new Group()
   built = false
   private bird!: ReturnType<typeof makeBird>

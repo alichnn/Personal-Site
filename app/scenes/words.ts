@@ -54,8 +54,8 @@ const GHOSTS: GhostItem[] = [
   // daylight version of the earlier lines: warm cream letters, a dark-brown outline and only a tight shadow
   { sel: '.earth-copy', rest: 0.56, dist: 9, range: T.sign, style: { color: '#fff4e2', outline: '#4a2a10', halo: '#2a1608', haloOpacity: 0.3, haloWidth: 0.035, haloBlur: 0.2 }, bob: 0.04, phase: 3 },
   { sel: '.work-title', rest: 0.74, dist: 14, range: T.work, style: headline('#ffffff', '#0b3b3d', '#04201f'), bob: 0.05, phase: 4 },
-  { sel: '.about-copy h2', rest: 0.91, dist: 7, range: T.about, style: headline('#f0d3ad', '#2a1205', '#0d0602', { haloOpacity: 0.5 }), bob: 0.02, phase: 5 },
-  { sel: '.about-copy p', rest: 0.91, dist: 7, range: T.about, style: { color: '#f2dcbc', outline: '#2a1205', halo: '#0d0602', haloOpacity: 0.55 }, bob: 0.02, phase: 6 },
+  { sel: '.about-copy h2', rest: 0.955, dist: 7, range: T.about, style: headline('#f0d3ad', '#2a1205', '#0d0602', { haloOpacity: 0.5 }), bob: 0.02, phase: 5 },
+  { sel: '.about-copy p', rest: 0.955, dist: 7, range: T.about, style: { color: '#f2dcbc', outline: '#2a1205', halo: '#0d0602', haloOpacity: 0.55 }, bob: 0.02, phase: 6 },
 ]
 
 const ROLE_STYLE: FlatStyle = { color: '#f6fbfa', outline: '#0a3436', halo: '#04201f', haloOpacity: 0.5 }

@@ -4,6 +4,7 @@ import { World } from '~/core/world'
 import { roles } from '~/data/content'
 import { ui } from '~/composables/useStory'
 import { sectionForPath } from '~/core/timeline'
+import { projectFromHash } from '~/composables/useProjects'
 
 const canvas = ref<HTMLCanvasElement | null>(null)
 const fade = ref<HTMLCanvasElement | null>(null)
@@ -26,7 +27,8 @@ function create() {
     fadeCanvas: fade.value!,
     reduced: ui.reduced,
     roleCount: roles.length,
-    eager: sectionForPath(location.pathname) > 0,
+    // a link to a later chapter (or straight to a project) needs its scenery before the loader lifts
+    eager: sectionForPath(location.pathname) > 0 || projectFromHash() >= 0,
     onLoadProgress: (f) => (ui.loadProgress = f),
     onReady: () => (ui.ready = true),
     onTier: (t) => (ui.tier = t),

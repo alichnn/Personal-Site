@@ -10,10 +10,10 @@ type Channel = 'wind' | 'night' | 'meadow' | 'pond' | 'fire'
 function weights(p: number): Record<Channel, number> {
   return {
     wind: 1 - smooth(p, 0.22, 0.3),
-    night: Math.max(bell(p, 0.24, 0.3, 0.4, 0.46), smooth(p, 0.9, 0.98) * 0.5),
+    night: Math.max(bell(p, 0.24, 0.3, 0.4, 0.46), smooth(p, 0.95, 0.99) * 0.5),
     meadow: bell(p, 0.43, 0.48, 0.62, 0.68),
-    pond: bell(p, 0.63, 0.68, 0.8, 0.86),
-    fire: smooth(p, 0.82, 0.86),
+    pond: bell(p, 0.63, 0.68, 0.9, 0.93),
+    fire: smooth(p, 0.91, 0.93),
   }
 }
 
@@ -243,6 +243,54 @@ class Soundscape {
     o.connect(g3).connect(this.master)
     o.start(land)
     o.stop(land + 0.08)
+  }
+
+  /**
+   * A lantern lighting: a soft breath of air as the wick catches, a low warm swell, and a faint
+   * high glint. Each lantern sits a little higher than the last, so a row lighting up rises.
+   */
+  lanternOn(i: number) {
+    const ctx = this.ctx
+    if (!this.enabled || !ctx || ctx.state !== 'running') return
+    const t = ctx.currentTime + 0.01
+    const s = ctx.createBufferSource()
+    s.buffer = this.white
+    const bp = ctx.createBiquadFilter()
+    bp.type = 'bandpass'
+    bp.Q.value = 0.9
+    bp.frequency.setValueAtTime(700, t)
+    bp.frequency.exponentialRampToValueAtTime(1500, t + 0.25)
+    const g = this.env(t, 0.07, 0.06, 0.35)
+    s.connect(bp).connect(g).connect(this.master)
+    s.start(t, Math.random() * 2, 0.5)
+    const steps = [0, 3, 5, 7, 10, 12]
+    const f = 220 * 2 ** (steps[i % steps.length]! / 12)
+    for (const [mult, peak, decay] of [[1, 0.05, 1.1], [2, 0.02, 0.9], [6, 0.006, 0.6]] as const) {
+      const o = ctx.createOscillator()
+      o.frequency.value = f * mult
+      const og = this.env(t + 0.04, peak, 0.08, decay)
+      o.connect(og).connect(this.master)
+      o.start(t + 0.04)
+      o.stop(t + 0.04 + 0.08 + decay + 0.05)
+    }
+  }
+
+  /** A case study opening (paper unfolding: a rising papery sweep) or closing (folding back down). */
+  paper(open: boolean) {
+    const ctx = this.ctx
+    if (!this.enabled || !ctx || ctx.state !== 'running') return
+    const t = ctx.currentTime + 0.005
+    const s = ctx.createBufferSource()
+    s.buffer = this.white
+    const bp = ctx.createBiquadFilter()
+    bp.type = 'bandpass'
+    bp.Q.value = 0.8
+    const [from, to] = open ? [900, 3800] : [3200, 800]
+    bp.frequency.setValueAtTime(from, t)
+    bp.frequency.exponentialRampToValueAtTime(to, t + 0.22)
+    const g = this.env(t, 0.12, 0.04, 0.22)
+    s.connect(bp).connect(g).connect(this.master)
+    s.start(t, Math.random() * 2.5, 0.32)
   }
 
   private env(t: number, peak: number, attack: number, decay: number) {

@@ -1,7 +1,7 @@
 import { CatmullRomCurve3, MathUtils, PerspectiveCamera, Vector3 } from 'three'
-import { CONSTELLATION_DIR, groundHeight } from './layout'
+import { CONSTELLATION_DIR, WATER_Y, groundHeight } from './layout'
 import { state } from './state'
-import { damp, lerp, smooth } from './timeline'
+import { SCROLL_SVH, damp, lerp, scrollFromStory, smooth, storyFromScroll } from './timeline'
 
 interface Key {
   p: number
@@ -12,6 +12,8 @@ interface Key {
   drift: number
   /** Alternative look target for portrait screens, where the horizontal view is narrow. */
   lookNarrow?: Vector3
+  /** Alternative position for portrait screens. */
+  posNarrow?: Vector3
 }
 
 const v = (x: number, y: number, z: number) => new Vector3(x, y, z)
@@ -25,6 +27,11 @@ function finaleLook(from: Vector3, elevDeg: number) {
 }
 
 const fireCam = g(6.6, 2.4, -256.2)
+/** Just above the pond surface, looking out over the lantern arc. Portrait screens sit higher, so the arc can recede up the screen. */
+const lanternCam = v(0, WATER_Y + 2.6, -273.5)
+const lanternLook = v(0, WATER_Y + 0.2, -296)
+const lanternCamNarrow = v(0, WATER_Y + 8.5, -268.6)
+const lanternLookNarrow = v(0, WATER_Y - 1.5, -290)
 
 // Keyframes pair up around each text block: two nearby positions spanning a long stretch of
 // scroll make a plateau (the camera barely moves while the text holds); the gaps between
@@ -57,26 +64,32 @@ const KEYS: Key[] = [
   // work hold
   { p: 0.697, pos: g(0, 8.4, -260.5), look: v(0.8, -0.3, -284), fov: 48, drift: 0.25 },
   { p: 0.79, pos: g(0, 8.2, -261.6), look: v(0.8, -0.3, -284.5), fov: 48, drift: 0.25 },
+  // lower to a close-up just above the water, then hold while the lanterns arrive and settle
+  { p: 0.812, pos: lanternCam.clone(), look: lanternLook.clone(), posNarrow: lanternCamNarrow.clone(), lookNarrow: lanternLookNarrow.clone(), fov: 50, drift: 0.14 },
+  { p: 0.884, pos: lanternCam.clone().add(v(0, 0.05, -0.4)), look: lanternLook.clone(), posNarrow: lanternCamNarrow.clone().add(v(0, 0.05, -0.4)), lookNarrow: lanternLookNarrow.clone(), fov: 50, drift: 0.14 },
+  // the shades lift off: look up after them as they climb toward the sunset
+  { p: 0.9, pos: v(0.4, WATER_Y + 2.2, -269.5), look: v(0, 10, -305), fov: 54, drift: 0.15 },
   // sunset across the water
-  { p: 0.816, pos: g(3, 3.0, -258), look: v(2, 2.6, -330), fov: 52, drift: 0.2 },
-  { p: 0.84, pos: g(5, 2.7, -257), look: g(9, 1.2, -284), fov: 52, drift: 0.15 },
+  { p: 0.908, pos: g(3, 3.0, -258), look: v(2, 5.5, -330), fov: 54, drift: 0.2 },
+  { p: 0.92, pos: g(5, 2.7, -257), look: g(9, 1.2, -284), fov: 52, drift: 0.15 },
   // campfire hold (long, for browsing albums)
-  { p: 0.868, pos: fireCam.clone(), look: g(11.2, 1.55, -270.5), lookNarrow: g(13.6, 2.3, -266.9), fov: 50, drift: 0.1 },
-  { p: 0.948, pos: fireCam.clone().add(v(0.1, 0, -0.5)), look: g(11.2, 1.65, -271), lookNarrow: g(13.6, 2.4, -267), fov: 50, drift: 0.1 },
+  { p: 0.934, pos: fireCam.clone(), look: g(11.2, 1.55, -270.5), lookNarrow: g(13.6, 2.3, -266.9), fov: 50, drift: 0.1 },
+  { p: 0.974, pos: fireCam.clone().add(v(0.1, 0, -0.5)), look: g(11.2, 1.65, -271), lookNarrow: g(13.6, 2.4, -267), fov: 50, drift: 0.1 },
   // tilt up into the stars
-  { p: 0.985, pos: fireCam.clone().add(v(0, 0.3, -0.8)), look: finaleLook(fireCam, 24), fov: 56, drift: 0.12 },
+  { p: 0.9925, pos: fireCam.clone().add(v(0, 0.3, -0.8)), look: finaleLook(fireCam, 24), fov: 56, drift: 0.12 },
   { p: 1.0, pos: fireCam.clone().add(v(0, 0.35, -0.9)), look: finaleLook(fireCam, 24.5), fov: 56, drift: 0.12 },
 ]
 
 const LUT_N = 4096
-/** Blur radius of the remap, in scroll progress; turns plateau corners into eases. */
-const REMAP_SMOOTH = 0.009
+/** Blur radius of the remap, in screen heights of scroll; turns plateau corners into eases. */
+const REMAP_SMOOTH_SVH = 14
 
 export class CameraRig {
   readonly camera: PerspectiveCamera
   private posCurve = new CatmullRomCurve3(KEYS.map((k) => k.pos), false, 'centripetal')
   private lookCurve = new CatmullRomCurve3(KEYS.map((k) => k.look), false, 'centripetal')
   private lookNarrowCurve = new CatmullRomCurve3(KEYS.map((k) => k.lookNarrow ?? k.look), false, 'centripetal')
+  private posNarrowCurve = new CatmullRomCurve3(KEYS.map((k) => k.posNarrow ?? k.pos), false, 'centripetal')
   private narrowTmp = new Vector3()
   /** 0 on landscape screens, 1 on tall portrait ones. */
   narrow = 0
@@ -105,19 +118,23 @@ export class CameraRig {
     this.buildLut()
   }
 
-  /** Scroll progress → curve parameter, with plateaus where keys are close together. */
+  /**
+   * Scroll → curve parameter, with plateaus where keys are close together. Built over scroll
+   * rather than progress, so a plateau's eased corners last the same scroll distance in every
+   * stretch of the story, however fast progress moves there.
+   */
   private buildLut() {
     const n = KEYS.length - 1
     const raw = new Float32Array(LUT_N)
     let k = 0
     for (let i = 0; i < LUT_N; i++) {
-      const p = i / (LUT_N - 1)
+      const p = storyFromScroll(i / (LUT_N - 1))
       while (k < n - 1 && p > KEYS[k + 1]!.p) k++
       const a = KEYS[k]!.p, b = KEYS[k + 1]!.p
       raw[i] = (k + Math.min(1, Math.max(0, (p - a) / (b - a)))) / n
     }
     // three box blurs ≈ gaussian
-    const r = Math.round(REMAP_SMOOTH * LUT_N)
+    const r = Math.round((REMAP_SMOOTH_SVH / SCROLL_SVH) * LUT_N)
     const at = (a: Float32Array, i: number) => a[Math.min(LUT_N - 1, Math.max(0, i))]!
     let src = raw
     for (let pass = 0; pass < 3; pass++) {
@@ -134,7 +151,7 @@ export class CameraRig {
   }
 
   private curveT(p: number) {
-    const x = Math.min(1, Math.max(0, p)) * (LUT_N - 1)
+    const x = scrollFromStory(p) * (LUT_N - 1)
     const i = Math.floor(x)
     const a = this.lut[i]!, b = this.lut[Math.min(LUT_N - 1, i + 1)]!
     return a + (b - a) * (x - i)
@@ -145,7 +162,10 @@ export class CameraRig {
     const t = this.curveT(p)
     this.posCurve.getPoint(t, outPos)
     this.lookCurve.getPoint(t, outLook)
-    if (this.narrow > 0) outLook.lerp(this.lookNarrowCurve.getPoint(t, this.narrowTmp), this.narrow)
+    if (this.narrow > 0) {
+      outLook.lerp(this.lookNarrowCurve.getPoint(t, this.narrowTmp), this.narrow)
+      outPos.lerp(this.posNarrowCurve.getPoint(t, this.narrowTmp), this.narrow)
+    }
     const x = t * (KEYS.length - 1)
     const i = Math.min(KEYS.length - 2, Math.floor(x))
     const f = smooth(x - i, 0, 1)
@@ -170,7 +190,7 @@ export class CameraRig {
     // Idle drift: always a little alive, fuller once scrolling stops, and nearly still
     // while the visitor is browsing albums.
     const t = state.time
-    const idleTarget = state.reduced ? 0 : (state.idle > 0.35 ? 1 : 0.35) * (1 - 0.95 * state.holdCamera)
+    const idleTarget = state.reduced ? 0 : (state.idle > 0.35 ? 1 : 0.35) * (1 - 0.95 * Math.max(state.holdCamera, state.lanternHold))
     this.driftAmt = damp(this.driftAmt, idleTarget, 1.1, dt)
     // narrow screens see much less horizontally, so the same sway would push text off-screen
     const s = this.driftAmt * drift * (1 - 0.65 * this.narrow)

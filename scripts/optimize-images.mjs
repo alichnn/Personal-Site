@@ -3,9 +3,13 @@
 //   assets-src/albums/<album>/<slug>.mov  ->  public/albums/<album>/<slug>.mp4 (4:5, silent) + a poster in the formats above
 //                                          (videos need ffmpeg: on PATH, or its path in the FFMPEG env var)
 //   assets-src/hero/alice.jpg             ->  public/images/alice-1600.webp                      (uncropped, high quality)
+//   assets-src/projects/<slug>/<name>.jpg ->  public/project-images/<slug>/<name>-{640,1280,1920}.{avif,webp} (uncropped, never enlarged)
+//                                          and their pixel sizes in app/data/project-images.json
+//   assets-src/projects/<slug>/<name>.mov ->  public/project-images/<slug>/<name>.mp4 (own proportions, 1280 wide, with sound);
+//                                          its poster is the image of the same name, or else a frame 1s in
 // Metadata (EXIF, GPS) is stripped. Originals are gitignored; the outputs are committed.
 import { execFileSync } from 'node:child_process'
-import { readdir, mkdir, stat } from 'node:fs/promises'
+import { readdir, mkdir, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, parse } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -31,7 +35,7 @@ async function newer(input, output) {
   }
 }
 
-async function variants(input, dir, slug, ratio, widths, formats, q = { avif: 52, webp: 78 }) {
+async function variants(input, dir, slug, ratio, widths, formats, q = { avif: 52, webp: 78 }, enlarge = true) {
   await mkdir(dir, { recursive: true })
   const meta = await sharp(input).rotate().metadata()
   const fx = FOCUS_X[slug]
@@ -48,7 +52,7 @@ async function variants(input, dir, slug, ratio, widths, formats, q = { avif: 52
         const cw = Math.min(W, Math.round(H * ratio))
         const left = Math.max(0, Math.min(W - cw, Math.round(fx * W - cw / 2)))
         img = img.extract({ left, top: 0, width: cw, height: H }).resize(w, h)
-      } else img = img.resize(w, h, { fit: 'cover', position: sharp.strategy.attention })
+      } else img = img.resize(w, h, { fit: 'cover', position: sharp.strategy.attention, withoutEnlargement: !enlarge })
       // AVIF must be 4:2:0 (AV1 Main profile): sharp defaults to 4:4:4 (High profile), which iPhone Safari
       // can't decode, and it shows a blank image instead of falling back to the WebP source.
       await (fmt === 'avif'
@@ -79,6 +83,31 @@ async function clip(input, dir, slug) {
   console.log('wrote', file.replace(root, ''))
 }
 
+/**
+ * A project video, watched with sound in the enlarged view: its own proportions, at most 1280 wide,
+ * H.264 + AAC for every browser. Without a poster image of the same name, a frame 1s in becomes one.
+ */
+async function projectClip(input, dir, slug, makePoster) {
+  await mkdir(dir, { recursive: true })
+  const file = join(dir, `${slug}.mp4`)
+  const run = (args) => execFileSync(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-y', '-i', input, ...args], { stdio: 'inherit' })
+  if (await newer(input, file)) {
+    try {
+      run(['-vf', "scale='min(1280,iw)':-2", '-c:v', 'libx264', '-profile:v', 'high', '-pix_fmt', 'yuv420p', '-crf', '27', '-preset', 'slow', '-c:a', 'aac', '-b:a', '96k', '-movflags', '+faststart', file])
+    } catch (e) {
+      if (e.code === 'ENOENT') return console.warn(`skipped ${slug}: install ffmpeg (or set FFMPEG) to convert videos`), false
+      throw e
+    }
+    console.log('wrote', file.replace(root, ''))
+  }
+  if (makePoster) {
+    const still = join(tmpdir(), `${slug}-poster.png`)
+    run(['-ss', '1', '-frames:v', '1', still])
+    await variants(still, dir, slug, null, PROJECT_WIDTHS, ['avif', 'webp'], { avif: 55, webp: 80 }, false)
+  }
+  return true
+}
+
 for (const album of await readdir(join(src, 'albums'))) {
   const dir = join(src, 'albums', album)
   if (!(await stat(dir)).isDirectory()) continue
@@ -90,3 +119,32 @@ for (const album of await readdir(join(src, 'albums'))) {
 
 // the hero photo is the one image seen large and up close in 3D, so it gets more pixels and less compression
 await variants(join(src, 'hero', 'alice.jpg'), join(out, 'images'), 'alice', null, [1600], ['webp'], { webp: 88 })
+
+// project galleries: screenshots and diagrams keep their own proportions, so nothing gets cropped off
+// the largest is for zooming into text-dense slides in the enlarged view
+const PROJECT_WIDTHS = [640, 1280, 1920]
+const sizes = {}
+// served from /project-images (not /projects, which is the Projects chapter's link)
+const projectsSrc = join(src, 'projects')
+for (const slug of await readdir(projectsSrc).catch(() => [])) {
+  const dir = join(projectsSrc, slug)
+  if (!(await stat(dir)).isDirectory()) continue
+  const names = await readdir(dir)
+  const outDir = join(out, 'project-images', slug)
+  const record = async (base) => {
+    const m = await sharp(join(outDir, `${base}-${PROJECT_WIDTHS.at(-1)}.webp`)).metadata()
+    sizes[`/project-images/${slug}/${base}`] = [m.width, m.height]
+  }
+  // images before videos, so a clip's poster is ready when its size is recorded
+  for (const name of names.sort((x, y) => Number(VIDEO.test(x)) - Number(VIDEO.test(y)))) {
+    const base = parse(name).name
+    if (IMAGE.test(name)) {
+      await variants(join(dir, name), outDir, base, null, PROJECT_WIDTHS, ['avif', 'webp'], { avif: 55, webp: 80 }, false)
+      await record(base)
+    } else if (VIDEO.test(name)) {
+      const hasPoster = names.some((n) => IMAGE.test(n) && parse(n).name === base)
+      if (await projectClip(join(dir, name), outDir, base, !hasPoster)) await record(base)
+    }
+  }
+}
+await writeFile(join(root, 'app', 'data', 'project-images.json'), JSON.stringify(sizes, null, 2) + '\n')

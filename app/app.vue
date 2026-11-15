@@ -31,11 +31,13 @@ ui.reduced = matchMedia('(prefers-reduced-motion: reduce)').matches || new URLSe
 
         <SignText />
         <WorkSection />
+        <LanternLayer />
         <AboutSection />
         <ContactStars />
       </main>
     </div>
 
+    <ProjectCard />
     <LoaderOverlay />
     <StoryNav />
     <SoundToggle />

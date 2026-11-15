@@ -204,7 +204,7 @@ export class Campfire implements WorldModule {
     this.flames.instanceMatrix.needsUpdate = true
 
     this.emberMat.uniforms.uAmount!.value = ignite * (state.reduced ? 0.4 : 1)
-    const night = smooth(wp, 0.845, 0.87)
+    const night = smooth(wp, 0.9225, 0.935)
     this.flyMat.uniforms.uAmount!.value = night
     this.flyMat.uniforms.uMotion!.value = state.reduced ? 0.15 : 1
     this.flyMat.uniforms.uRise!.value = state.reduced ? 0 : smooth(wp, T.tilt[0], 1)

@@ -40,6 +40,7 @@ import { Terrain } from '../scenes/terrain'
 import { Meadow } from '../scenes/meadow'
 import { Bird } from '../scenes/bird'
 import { Pond } from '../scenes/pond'
+import { Lanterns } from '../scenes/lanterns'
 import { Campfire } from '../scenes/campfire'
 import { Words } from '../scenes/words'
 
@@ -67,6 +68,37 @@ export interface WorldOptions {
   onReady(): void
   onTier(t: Tier): void
 }
+
+/**
+ * One step of a Kawase blur (four diagonal taps at a growing offset). A few in a row give a soft,
+ * wide blur cheaply; the last one also darkens and mutes the frame behind an open case study.
+ */
+const BlurShader = {
+  uniforms: {
+    tDiffuse: { value: null },
+    uTexel: { value: new Vector2(1, 1) },
+    uOffset: { value: 0 },
+    uDim: { value: 0 },
+  },
+  vertexShader: /* glsl */ `
+    varying vec2 vUv;
+    void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+  fragmentShader: /* glsl */ `
+    uniform sampler2D tDiffuse;
+    uniform vec2 uTexel;
+    uniform float uOffset;
+    uniform float uDim;
+    varying vec2 vUv;
+    void main() {
+      vec2 o = uTexel * (uOffset + 0.5);
+      vec4 c = (texture2D(tDiffuse, vUv + vec2(o.x, o.y)) + texture2D(tDiffuse, vUv + vec2(-o.x, o.y))
+              + texture2D(tDiffuse, vUv + vec2(o.x, -o.y)) + texture2D(tDiffuse, vUv + vec2(-o.x, -o.y))) * 0.25;
+      float grey = dot(c.rgb, vec3(0.3, 0.55, 0.15));
+      c.rgb = mix(c.rgb, vec3(grey), 0.25 * uDim) * (1.0 - 0.5 * uDim);
+      gl_FragColor = c;
+    }`,
+}
+const BLUR_OFFSETS = [0, 1, 2, 3, 4]
 
 const GradeShader = {
   uniforms: {
@@ -116,6 +148,7 @@ export class World {
   readonly meadow = new Meadow()
   readonly bird = new Bird()
   readonly pond = new Pond()
+  readonly lanterns = new Lanterns()
   readonly campfire = new Campfire()
   readonly words = new Words()
   readonly modules: WorldModule[]
@@ -125,6 +158,10 @@ export class World {
   ready = false
   /** The scene renders below the screen's pixel density (phones), so the lettering gets its own full-res pass. */
   private sharpText = false
+  /** 0..1: the blurred, darkened backdrop behind an open case study (eases toward state.backdrop). */
+  private blurAmt = 0
+  private blurPasses: ShaderPass[] = []
+  private sceneDpr = 1
 
   private opts: WorldOptions
   private raf = 0
@@ -181,6 +218,14 @@ export class World {
     this.composer.addPass(this.bloom)
     this.grade = new ShaderPass(GradeShader)
     this.composer.addPass(this.grade)
+    for (const [i, o] of BLUR_OFFSETS.entries()) {
+      const pass = new ShaderPass(BlurShader)
+      pass.uniforms.uOffset!.value = o
+      pass.uniforms.uDim!.value = i === BLUR_OFFSETS.length - 1 ? 1 : 0
+      pass.enabled = false
+      this.blurPasses.push(pass)
+      this.composer.addPass(pass)
+    }
     this.composer.addPass(new OutputPass())
     this.composer.addPass(new FXAAPass())
 
@@ -188,7 +233,7 @@ export class World {
     this.rig = new CameraRig(this.camera)
     this.lenis = createScroll(opts.reduced)
 
-    this.modules = [this.sky, this.clouds, this.hero, this.night, this.seeds, this.terrain, this.meadow, this.bird, this.pond, this.campfire, this.words]
+    this.modules = [this.sky, this.clouds, this.hero, this.night, this.seeds, this.terrain, this.meadow, this.bird, this.pond, this.lanterns, this.campfire, this.words]
     for (const m of this.modules) {
       m.group.visible = false
       this.scene.add(m.group)
@@ -223,7 +268,7 @@ export class World {
     await this.buildModule(this.words)
     // a link straight to a later chapter needs its scenery ready before the loader lifts
     if (this.opts.eager) {
-      const later = [this.terrain, this.meadow, this.bird, this.pond, this.campfire]
+      const later = [this.terrain, this.meadow, this.bird, this.pond, this.lanterns, this.campfire]
       for (const [i, m] of later.entries()) {
         await this.buildModule(m)
         onLoadProgress(0.7 + (0.3 * (i + 1)) / (later.length + 1))
@@ -240,7 +285,7 @@ export class World {
     onReady()
 
     // Phase 3: stream later scenes during idle time, in scroll order.
-    for (const m of [this.terrain, this.meadow, this.bird, this.pond, this.campfire]) {
+    for (const m of [this.terrain, this.meadow, this.bird, this.pond, this.lanterns, this.campfire]) {
       await idle()
       if (this.disposed) return
       await this.buildModule(m)
@@ -321,8 +366,8 @@ export class World {
     // lettering is drawn straight on top at full sharpness (see render). Otherwise one pass does all.
     const textDpr = Math.min(screenDpr, 3)
     this.sharpText = textDpr > dpr + 0.01
-    this.camera.layers.set(0)
-    if (!this.sharpText) this.camera.layers.enable(TEXT_LAYER)
+    this.sceneDpr = dpr
+    for (const pass of this.blurPasses) pass.uniforms.uTexel!.value.set(1 / (w * dpr), 1 / (h * dpr))
     this.renderer.setPixelRatio(this.sharpText ? textDpr : dpr)
     this.renderer.setSize(w, h, false)
     this.composer.setPixelRatio(dpr)
@@ -383,7 +428,10 @@ export class World {
     const dt = Math.min(0.05, this.lastNow ? (now - this.lastNow) / 1000 : 1 / 60)
     this.lastNow = now
     state.dt = dt
-    state.time += dt
+    // behind an open case study the world slows almost to a stop (and renders at half rate below)
+    this.blurAmt = damp(this.blurAmt, state.backdrop, state.backdrop > this.blurAmt ? 7 : 9, dt)
+    if (Math.abs(this.blurAmt - state.backdrop) < 0.002) this.blurAmt = state.backdrop
+    state.time += dt * (1 - 0.8 * this.blurAmt)
     G.uTime.value = state.time
 
     this.lenis.raf(now)
@@ -439,7 +487,8 @@ export class World {
 
     // shadows move slowly; refresh the shadow map every other frame
     this.renderer.shadowMap.needsUpdate = this.frameCount++ % 2 === 0
-    this.render()
+    // fully behind a case study, the blurred frame barely changes: draw every other frame
+    if (this.blurAmt < 0.999 || this.frameCount % 2 === 0) this.render()
     for (const hook of frameHooks) hook()
     this.monitor(dt)
   }
@@ -450,8 +499,18 @@ export class World {
     this.bloom.radius = radius
     this.bloom.threshold = threshold
     this.grade.uniforms.uFlash!.value = this.flash
+    // behind an open case study the lettering blurs with everything else, so it's drawn in the main pass
+    const textOnTop = this.sharpText && this.blurAmt < 0.001
+    this.camera.layers.set(0)
+    if (!textOnTop) this.camera.layers.enable(TEXT_LAYER)
+    const last = this.blurPasses.length - 1
+    this.blurPasses.forEach((pass, i) => {
+      pass.enabled = this.blurAmt > 0.001
+      pass.uniforms.uOffset!.value = BLUR_OFFSETS[i]! * this.blurAmt * this.sceneDpr
+      pass.uniforms.uDim!.value = i === last ? this.blurAmt : 0
+    })
     this.composer.render()
-    if (this.sharpText) {
+    if (textOnTop) {
       // the lettering, at the canvas's full density, over the upscaled scene (it's always in front of it)
       const r = this.renderer
       const autoClear = r.autoClear

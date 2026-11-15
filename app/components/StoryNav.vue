@@ -80,7 +80,7 @@ function go(i: number) {
   <nav
     ref="nav"
     class="legend"
-    :class="{ shown: inStory && !ui.albumOpen && (near || awake || engaged) }"
+    :class="{ shown: inStory && !ui.albumOpen && !ui.projectOpen && (near || awake || engaged) }"
     aria-label="Sections"
     @pointerenter="engaged = true"
     @pointerleave="engaged = false"

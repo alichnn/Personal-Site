@@ -19,22 +19,39 @@ export const damp = (current: number, target: number, lambda: number, dt: number
 export type Range4 = [number, number, number, number]
 
 /**
- * Scroll lengths, in small-viewport heights. The cloud intro (story 0 → INTRO_STORY, up to
- * "Hey, I'm Alice") gets its own budget; the rest of the story moves at its own pace.
- * Everything else is keyed on story progress, so these only change how far you scroll.
+ * Scroll lengths: each knot is [story progress, small-viewport heights scrolled to reach it].
+ * Between knots, progress moves evenly with scroll, so each stretch has its own pace and its own
+ * budget. Everything else is keyed on story progress, so these only change how far you scroll.
  */
-const INTRO_SVH = 210
-const STORY_SVH = 1395
+const KNOTS: [number, number][] = [
+  [0, 0],
+  // the cloud intro, up to "Hey, I'm Alice"
+  [0.118, 210],
+  // the story through Work
+  [0.8, 1289],
+  // down to the pond surface while the lanterns float in and light
+  [0.842, 1384],
+  // the lantern plateau: longer than any text hold, because people stop to explore
+  [0.884, 1534],
+  // the lanterns rise, the pond burns into the campfire, About, Contact
+  [1, 1901],
+]
 /** Total scroll length, in small-viewport heights. */
-export const SCROLL_SVH = INTRO_SVH + STORY_SVH
+export const SCROLL_SVH = KNOTS[KNOTS.length - 1]![1]
 
-const INTRO_STORY = 0.118
-const INTRO_SCROLL = INTRO_SVH / SCROLL_SVH
-export function storyFromScroll(s: number) {
-  return s <= INTRO_SCROLL ? (s * INTRO_STORY) / INTRO_SCROLL : INTRO_STORY + ((s - INTRO_SCROLL) * (1 - INTRO_STORY)) / (1 - INTRO_SCROLL)
+function interp(x: number, from: 0 | 1, to: 0 | 1) {
+  let i = 0
+  while (i < KNOTS.length - 2 && x > KNOTS[i + 1]![from]) i++
+  const a = KNOTS[i]!, b = KNOTS[i + 1]!
+  return a[to] + ((x - a[from]) * (b[to] - a[to])) / (b[from] - a[from])
 }
+/** Scroll fraction (0..1) to story progress. */
+export function storyFromScroll(s: number) {
+  return interp(clamp01(s) * SCROLL_SVH, 1, 0)
+}
+/** Story progress to scroll fraction (0..1). */
 export function scrollFromStory(p: number) {
-  return p <= INTRO_STORY ? (p * INTRO_SCROLL) / INTRO_STORY : INTRO_SCROLL + ((p - INTRO_STORY) * (1 - INTRO_SCROLL)) / (1 - INTRO_STORY)
+  return interp(clamp01(p), 0, 1) / SCROLL_SVH
 }
 
 export const T = {
@@ -50,25 +67,35 @@ export const T = {
   bird: [0.618, 0.664] as [number, number],
   work: [0.678, 0.69, 0.79, 0.8] as Range4,
   workRoles: [0.698, 0.778] as [number, number],
-  sunset: [0.796, 0.818] as [number, number],
-  burn: [0.81, 0.832] as [number, number],
-  gather: [0.828, 0.852] as [number, number],
-  about: [0.862, 0.874, 0.944, 0.953] as Range4,
-  tilt: [0.952, 0.985] as [number, number],
-  constellation2: [0.962, 0.988] as [number, number],
-  contact: [0.974, 0.988, 2, 3] as Range4,
+  /** The camera lowers to the water and the lanterns float out of the reeds, one after another. */
+  lanternArrive: [0.806, 0.84] as [number, number],
+  /** The lantern plateau: the buttons, titles and hint are live between [1] and [2]. */
+  lanterns: [0.836, 0.842, 0.884, 0.888] as Range4,
+  /** The paper shades lift off and rise into the sky, warming to gold as the sunset comes on. */
+  lanternRise: [0.886, 0.93] as [number, number],
+  sunset: [0.898, 0.909] as [number, number],
+  burn: [0.905, 0.916] as [number, number],
+  gather: [0.914, 0.926] as [number, number],
+  about: [0.931, 0.937, 0.972, 0.9765] as Range4,
+  tilt: [0.976, 0.9925] as [number, number],
+  constellation2: [0.981, 0.994] as [number, number],
+  contact: [0.987, 0.994, 2, 3] as Range4,
 }
+
+/** Where the lantern plateau rests: every lantern lit and settled in its arc. */
+export const LANTERN_REST = 0.862
 
 /**
  * The story's chapters, for the nav. `from` is where the chapter begins (for the highlight);
  * `to` is where a jump to it lands: the hero greeting, the Work heading before any role shows,
- * the album cards by the fire, and the finished constellation.
+ * the lit lanterns, the album cards by the fire, and the finished constellation.
  */
 export const SECTIONS = [
   { label: 'Intro', path: '/intro', from: 0, to: 0.16 },
   // the heading is fully in by 0.69 and the first role starts fading in just before 0.695
   { label: 'Work', path: '/work', from: T.work[0], to: 0.6925 },
-  { label: 'About', path: '/about', from: T.work[3], to: 0.91 },
+  { label: 'Projects', path: '/projects', from: T.work[3], to: LANTERN_REST },
+  { label: 'About', path: '/about', from: T.lanternRise[0], to: 0.955 },
   { label: 'Contact', path: '/contact', from: T.about[3], to: 1 },
 ] as const
 
@@ -109,6 +136,11 @@ export function compositions(roleCount: number) {
     const [a, b] = roleSlot(i, roleCount)
     list.push({ until: i === roleCount - 1 ? 0.8 : b, rest: (a + b) / 2 })
   }
-  list.push({ until: 0.855, rest: 0.842 }, { until: 0.955, rest: 0.91 }, { until: 1.01, rest: 1 })
+  list.push(
+    { until: T.lanternRise[0], rest: LANTERN_REST },
+    { until: 0.9275, rest: 0.921 },
+    { until: 0.9775, rest: 0.955 },
+    { until: 1.01, rest: 1 },
+  )
   return list
 }

@@ -27,6 +27,8 @@ import { lilyPadGeometry, makeKoi, makeLotus } from './models'
 
 const RIPPLES = 12
 const EMBERS = 220
+/** Lantern lights the water can show (matches MAX_LANTERNS in lanterns.ts). */
+const LANTERN_LIGHTS = 6
 
 const WATER_VERT = /* glsl */ `
 varying vec3 vWorld;
@@ -56,6 +58,9 @@ uniform float uGather;
 uniform vec3 uFirePos;
 uniform float uFireIntensity;
 uniform vec3 uSkyAmb;
+uniform vec4 uLanterns[${LANTERN_LIGHTS}];
+uniform vec3 uLanternColors[${LANTERN_LIGHTS}];
+uniform vec4 uWakes[${LANTERN_LIGHTS}];
 varying vec3 vWorld;
 varying vec2 vLocal;
 ${NOISE}
@@ -126,17 +131,50 @@ void main() {
   float fd = length(vWorld.xz - uFirePos.xz);
   col += vec3(1.0, 0.45, 0.15) * uFireIntensity * 0.35 / (1.0 + fd * fd * 0.02) * (0.5 + fres);
 
+  // the lanterns: each one's glow reflected as a broken streak toward the viewer, a soft pool
+  // around it, and a V-shaped wake behind it while it travels
+  float wake = 0.0;
+  for (int i = 0; i < ${LANTERN_LIGHTS}; i++) {
+    vec4 L = uLanterns[i];
+    if (L.z < 0.001) continue;
+    vec2 d = vWorld.xz - L.xy;
+    vec2 toCam = normalize(cameraPosition.xz - L.xy + 1e-4);
+    float along = dot(d, toCam);
+    float across = dot(d, vec2(-toCam.y, toCam.x));
+    float wob = (vnoise(vec2(along * 2.6 - t * 1.4, float(i) * 7.3)) - 0.5) * 0.45;
+    float width = 0.3 + max(along, 0.0) * 0.06;
+    float streak = exp(-pow((across + wob) / width, 2.0)) * exp(-max(along, 0.0) / 4.4) * smoothstep(-0.9, 0.0, along);
+    float pool = exp(-dot(d, d) / 2.0);
+    float k = (streak * (0.45 + 0.55 * shimmer) + pool * 0.6) * L.z;
+    col += uLanternColors[i] * floor(k * 4.0 + 0.3) / 4.0 * 0.78;
+    vec4 W = uWakes[i];
+    if (W.z > 0.001) {
+      vec2 back = -W.xy;
+      float a = dot(d, back);
+      float side = abs(dot(d, vec2(-back.y, back.x)));
+      float line = 1.0 - smoothstep(0.0, 0.07 + a * 0.025, abs(side - (0.22 + a * 0.36)));
+      wake += line * step(0.0, a) * (1.0 - smoothstep(0.6, 4.2, a)) * W.z;
+    }
+  }
+
   // ripples + a foam ring where the water meets the bank
   float ang = atan(vLocal.y, vLocal.x);
   float edge = 0.965 + 0.012 * sin(ang * 13.0 + t * 1.3) + 0.01 * sin(ang * 7.0 - t * 0.9);
   float foam = step(edge, r) * (1.0 - step(edge + 0.06, r));
-  col = mix(col, vec3(0.92, 0.97, 1.0) * (0.35 + uSunColor * 0.5 + uFireIntensity * 0.1), max(foam * 0.85, step(0.45, rings) * 0.75));
+  col = mix(col, vec3(0.92, 0.97, 1.0) * (0.35 + uSunColor * 0.5 + uFireIntensity * 0.1), max(max(foam * 0.85, step(0.45, rings) * 0.75), step(0.4, wake) * 0.55));
 
   float alpha = mix(0.46, 0.88, depth);
   alpha = max(alpha, max(burn, foam));
   gl_FragColor = vec4(col, alpha);
   #include <fog_fragment>
 }`
+
+/** Open water in front of the lantern camera, where the lanterns arrive and settle (decorative pads stay out). */
+function inLanternWater(x: number, z: number) {
+  const inArc = Math.abs(x - POND.x) < 7.5 && z < POND.z + 15 && z > POND.z - 8
+  const inPath = Math.abs(x - POND.x - 1) < 9 && z <= POND.z - 8
+  return inArc || inPath
+}
 
 interface Koi { parts: ReturnType<typeof makeKoi>; school: number; lag: number; offset: Vector3 }
 interface Pad { mesh: Group; base: Vector3; phase: number }
@@ -148,6 +186,11 @@ export class Pond implements WorldModule {
   built = false
   /** Live world positions above each work pad, for the HTML role cards. */
   readonly padAnchors: Vector3[] = roles.map(() => new Vector3())
+  /** Set by the lanterns each frame: x, z, glow on the water (0 = off). */
+  readonly lanternLights = Array.from({ length: LANTERN_LIGHTS }, () => new Vector4())
+  readonly lanternColors = Array.from({ length: LANTERN_LIGHTS }, () => new Color())
+  /** Travel direction x, z and wake strength. */
+  readonly lanternWakes = Array.from({ length: LANTERN_LIGHTS }, () => new Vector4())
   private water!: Mesh
   private waterMat!: ShaderMaterial
   private ripples = Array.from({ length: RIPPLES }, () => new Vector4(0, 0, -100, 0))
@@ -187,6 +230,9 @@ export class Pond implements WorldModule {
       uFirePos: { value: FIRE },
       uFireIntensity: G.uFireIntensity,
       uSkyAmb: G.uSkyAmb,
+      uLanterns: { value: this.lanternLights },
+      uLanternColors: { value: this.lanternColors },
+      uWakes: { value: this.lanternWakes },
     })
     this.water = new Mesh(new CircleGeometry(POND_R + 2.5, 96, 0, Math.PI * 2), this.waterMat)
     this.water.rotation.x = -Math.PI / 2
@@ -217,9 +263,9 @@ export class Pond implements WorldModule {
         const a = r() * Math.PI * 2, d = range(r, 4, POND_R - 3)
         x = POND.x + Math.cos(a) * d
         z = POND.z + Math.sin(a) * d
-        // keep the work pads' lanes and the islet clear
+        // keep the work pads' lanes, the islet, and the lanterns' water clear
         const clear = this.lanes(w).every((l) => Math.hypot(x - l.x, z - l.z) > 3.6)
-        if (clear && Math.hypot(x - ISLET.x, z - ISLET.z) > 2.5) break
+        if (clear && Math.hypot(x - ISLET.x, z - ISLET.z) > 2.5 && !inLanternWater(x, z)) break
       }
       const g = new Group()
       const pad = new Mesh(lilyPadGeometry(range(r, 0.6, 1.15), 500 + i), padMat)
@@ -372,17 +418,22 @@ export class Pond implements WorldModule {
     this.embers.visible = burn > 0.001 && gather < 0.999
 
 
-    // the work pads idle in their own lanes; the camera eases toward whichever is in focus
+    // the work pads idle in their own lanes; the camera eases toward whichever is in focus.
+    // Once Work is over they drift off to the near bank, leaving the water to the lanterns.
     let total = 0
     this.focusLook.set(0, 0, 0)
+    const park = smooth(wp, T.work[2] + 0.004, T.lanternArrive[0] + 0.004)
     roles.forEach((_, i) => {
       const lane = this.lanes(w)[i]!
       const g = this.workPads[i]!
+      const side = lane.x - POND.x < 0 ? -1 : 1
       g.position.set(
         lane.x + Math.sin(t * 0.12 + i * 2) * 0.45 * motion,
         lane.y + Math.sin(t * 1.1 + i) * 0.02 * motion,
         lane.z + Math.cos(t * 0.1 + i * 2) * 0.35 * motion,
       )
+      g.position.x += (POND.x + side * (5.2 + i * 0.9) - lane.x) * park
+      g.position.z += (POND.z + 20 - i * 0.4 - lane.z) * park
       g.rotation.y = t * 0.05 * motion + i
       this.padAnchors[i]!.copy(g.position).add(this.v.set(0, 0.35, 0))
       const f = this.focus(i)
@@ -427,7 +478,7 @@ export class Pond implements WorldModule {
     }
   }
 
-  private addRipple(x: number, z: number, strength: number, t: number) {
+  addRipple(x: number, z: number, strength: number, t: number) {
     const rp = this.ripples[this.rippleIdx]!
     rp.set(x, z, t, strength)
     this.rippleIdx = (this.rippleIdx + 1) % RIPPLES
@@ -435,7 +486,7 @@ export class Pond implements WorldModule {
 
   private updateRipples(t: number, _dt: number) {
     // the cursor leaves ripples on the water
-    if (G.uPointerStrength.value > 0.3 && state.wp > 0.66 && state.wp < 0.84) {
+    if (G.uPointerStrength.value > 0.3 && state.wp > 0.66 && state.wp < 0.92) {
       const o = G.uPointerRayO.value, d = G.uPointerRayD.value
       if (d.y < -0.01) {
         const k = (WATER_Y - o.y) / d.y
