@@ -14,8 +14,11 @@ export const HEADLINE_FONT = HERO_FONT
 /** Redaction 50 Italic, for the quiet one-line captions under the roles. */
 export const CAPTION_FONT = '/fonts/redaction-50-400-italic.woff'
 
-/** All lettering lives on its own layer, so World can draw it at the screen's full sharpness. */
-export const TEXT_LAYER = 1
+/**
+ * All lettering (and the hero photo in its frame) lives on its own layer, so World can draw it at
+ * the screen's full sharpness. The scene's lights are on it too, so lit things there shade the same.
+ */
+export const SHARP_LAYER = 1
 
 export interface FlatLayout {
   /** Font size in world units. */
@@ -78,7 +81,7 @@ export class FlatText {
       t.letterSpacing = style.letterSpacing ?? 0
       t.sdfGlyphSize = 64
       t.raycast = () => {}
-      t.layers.set(TEXT_LAYER)
+      t.layers.set(SHARP_LAYER)
     }
     const main = this.text
     main.color = this.baseColor.clone()

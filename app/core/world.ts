@@ -23,13 +23,13 @@ import { FXAAPass } from 'three/examples/jsm/postprocessing/FXAAPass.js'
 import type Lenis from 'lenis'
 import { Atmosphere } from './atmosphere'
 import { CameraRig } from './camera'
-import { QUALITY, detectTier, lowerTier, type Quality } from './quality'
+import { QUALITY, softwareGpu, detectTier, lowerTier, type Quality } from './quality'
 import { createScroll } from './scroll'
 import { G, frameHooks, state, type Tier } from './state'
 import { SCROLL_SVH, compositions, damp, storyFromScroll } from './timeline'
 import { scrollToProgress } from './scroll'
 import { groundHeight } from './layout'
-import { TEXT_LAYER } from './flattext'
+import { SHARP_LAYER } from './flattext'
 
 import { Sky } from '../scenes/sky'
 import { Clouds } from '../scenes/clouds'
@@ -161,7 +161,13 @@ export class World {
   /** 0..1: the blurred, darkened backdrop behind an open case study (eases toward state.backdrop). */
   private blurAmt = 0
   private blurPasses: ShaderPass[] = []
-  private sceneDpr = 1
+  /** The pixel ratio the scene renders at (the screen's, capped by `dprCap`). */
+  sceneDpr = 1
+  /**
+   * Current cap on the scene's pixel ratio: starts at the tier's `dpr`, and the watchdog lowers it
+   * (no further than the tier's `minDpr`) on slow frames before it gives up detail.
+   */
+  private dprCap = 1
 
   private opts: WorldOptions
   private raf = 0
@@ -203,11 +209,12 @@ export class World {
       const q = new URLSearchParams(location.search)
       const o: Partial<Quality> = {}
       if (q.has('msaa')) o.msaa = +q.get('msaa')!
-      if (q.has('dpr')) o.dpr = +q.get('dpr')!
+      if (q.has('dpr')) o.dpr = o.minDpr = +q.get('dpr')!
       if (q.has('shadows')) o.shadows = q.get('shadows') === '1'
       if (q.has('bloom')) o.bloomScale = +q.get('bloom')!
       this.quality = { ...this.quality, ...o }
     }
+    this.dprCap = softwareGpu(renderer) ? this.quality.minDpr : this.quality.dpr
     state.tier = tier
     opts.onTier(tier)
 
@@ -346,6 +353,8 @@ export class World {
     if (tier === this.quality.tier) return
     const shadowsChanged = QUALITY[tier].shadows !== this.quality.shadows
     this.quality = QUALITY[tier]
+    // never sharper than the resolution the watchdog already settled on
+    this.dprCap = Math.min(this.dprCap, this.quality.dpr)
     state.tier = tier
     for (const m of this.modules) if (m.built) m.setQuality?.(this.quality)
     if (shadowsChanged) this.applyShadows()
@@ -360,10 +369,10 @@ export class World {
     state.width = w
     state.height = h
     const screenDpr = devicePixelRatio || 1
-    const dpr = Math.min(screenDpr, this.quality.dpr)
+    const dpr = Math.min(screenDpr, this.dprCap)
     // When the scene is capped below the screen's density (a 3× phone renders at 1×), the canvas
     // still runs at full density: the composer draws the scene at `dpr` and upscales it, then the
-    // lettering is drawn straight on top at full sharpness (see render). Otherwise one pass does all.
+    // lettering and hero photo are drawn straight on top at full sharpness (see render). Otherwise one pass does all.
     const textDpr = Math.min(screenDpr, 3)
     this.sharpText = textDpr > dpr + 0.01
     this.sceneDpr = dpr
@@ -502,7 +511,7 @@ export class World {
     // behind an open case study the lettering blurs with everything else, so it's drawn in the main pass
     const textOnTop = this.sharpText && this.blurAmt < 0.001
     this.camera.layers.set(0)
-    if (!textOnTop) this.camera.layers.enable(TEXT_LAYER)
+    if (!textOnTop) this.camera.layers.enable(SHARP_LAYER)
     const last = this.blurPasses.length - 1
     this.blurPasses.forEach((pass, i) => {
       pass.enabled = this.blurAmt > 0.001
@@ -511,15 +520,19 @@ export class World {
     })
     this.composer.render()
     if (textOnTop) {
-      // the lettering, at the canvas's full density, over the upscaled scene (it's always in front of it)
+      // the lettering and hero photo, at the canvas's full density, over the upscaled scene (they're always in front of it)
       const r = this.renderer
       const autoClear = r.autoClear
       r.autoClear = false
       r.setRenderTarget(null)
       r.clearDepth()
-      this.camera.layers.set(TEXT_LAYER)
+      // the sun is on this layer too (for the hero frame's shading); its shadow map is already current
+      const shadows = r.shadowMap.autoUpdate
+      r.shadowMap.autoUpdate = false
+      this.camera.layers.set(SHARP_LAYER)
       r.render(this.scene, this.camera)
       this.camera.layers.set(0)
+      r.shadowMap.autoUpdate = shadows
       r.autoClear = autoClear
     }
   }
@@ -551,7 +564,7 @@ export class World {
       if (pr.frames >= 110) {
         pr.done = true
         const avg = pr.sum / 90
-        if (avg > 1 / 40 && this.quality.tier !== 'low') this.downgrade()
+        if (avg > 1 / 40) this.slow(avg, 1 / 45)
       }
       return
     }
@@ -561,13 +574,30 @@ export class World {
       const avg = pr.window / pr.windowFrames
       pr.window = 0
       pr.windowFrames = 0
-      if (avg > 1 / 27 && this.quality.tier !== 'low' && pr.downgrades < 2) this.downgrade()
+      if (avg > 1 / 27) this.slow(avg, 1 / 35)
     }
   }
 
-  private downgrade() {
+  /**
+   * Frames are slow (`avg` seconds against a `goal`): render fewer pixels first, since the scene's
+   * cost mostly scales with them, and only step down a tier once the pixel ratio is at its floor.
+   */
+  private slow(avg: number, goal: number) {
+    const dpr = Math.min(devicePixelRatio || 1, this.dprCap)
+    const floor = this.quality.minDpr
+    if (dpr > floor + 0.01) {
+      // fill cost goes with the square of the pixel ratio: settle in one step, on a 0.25 grid
+      const next = Math.floor(dpr * Math.sqrt(goal / avg) * 4) / 4
+      this.dprCap = Math.max(floor, Math.min(next, dpr - 0.25))
+      this.resize()
+      if (this.ready) this.render()
+      if (import.meta.dev) console.info(`[quality] pixel ratio ${dpr} → ${this.dprCap}`)
+      return
+    }
+    if (this.quality.tier === 'low' || this.probe.downgrades >= 2) return
     this.probe.downgrades++
     this.setTier(lowerTier(this.quality.tier))
+    if (import.meta.dev) console.info(`[quality] tier → ${this.quality.tier}`)
   }
 
   dispose() {

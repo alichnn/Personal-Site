@@ -158,7 +158,7 @@ export class Seeds implements WorldModule {
 
   resize(w: World) {
     this.mat.uniforms.uPx!.value = Math.min(devicePixelRatio || 1, 2)
-    const h = innerHeight * Math.min(devicePixelRatio || 1, w.quality.dpr)
+    const h = innerHeight * w.sceneDpr
     this.mat.uniforms.uScale!.value = h / (2 * Math.tan(MathUtils.degToRad(50 / 2)))
   }
 

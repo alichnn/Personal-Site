@@ -21,8 +21,9 @@ import {
   Vector3,
 } from 'three'
 import type { World, WorldModule } from '../core/world'
-import { SKY_Y } from '../core/layout'
+import { BURST_Z, SKY_Y } from '../core/layout'
 import { state } from '../core/state'
+import { SHARP_LAYER } from '../core/flattext'
 import { addOutline, toon } from '../core/toon'
 import { blob, flat, merge, paint, rng } from '../core/util'
 import { hero as heroCopy } from '../data/content'
@@ -39,6 +40,8 @@ export class Hero implements WorldModule {
   private scale = 1
   /** Outer frame size before scaling. */
   private size = new Vector2(2.7, 3.3)
+  /** Whether the frame is on the sharp layer (see update). */
+  private sharp = false
 
   async build(w: World) {
     const img = new Image()
@@ -184,7 +187,15 @@ export class Hero implements WorldModule {
     this.rigGroup.lookAt(restPos)
   }
 
-  update() {
+  update(w: World) {
+    // On phones World draws the sharp layer at full density over the upscaled scene, like the
+    // lettering, so the photo isn't blurred. That pass draws over everything and skips the burst's
+    // flash, so the frame joins it only once the camera is clear of the final cloud wall.
+    const sharp = w.camera.position.z < BURST_Z - 40 && w.flash < 0.001
+    if (sharp !== this.sharp) {
+      this.sharp = sharp
+      this.group.traverse((o) => o.layers.set(sharp ? SHARP_LAYER : 0))
+    }
     const t = state.time
     const motion = state.reduced ? 0 : 1
     this.rigGroup.position.copy(this.anchor)

@@ -1,5 +1,6 @@
 import { Color, DirectionalLight, FogExp2, HemisphereLight, MathUtils, PointLight, Vector3, type Scene } from 'three'
 import { G } from './state'
+import { SHARP_LAYER } from './flattext'
 
 // One lighting rig for the whole world. Every value here is keyframed on progress, so the
 // transitions between scenes are just this rig moving through its keys.
@@ -88,6 +89,7 @@ export class Atmosphere {
     this.fog = new FogExp2('#ffffff', 0.002)
     this.fireLight.position.set(0, -50, 0)
     scene.add(this.hemi, this.sun, this.sun.target, this.fireLight)
+    for (const light of [this.hemi, this.sun, this.fireLight]) light.layers.enable(SHARP_LAYER)
     scene.fog = this.fog
   }
 
