@@ -23,6 +23,14 @@ export default defineNuxtConfig({
         { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' },
         { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
       ],
+      // Cloudflare Web Analytics: cookie-free visit counts (dash.cloudflare.com → Web Analytics)
+      script: [
+        {
+          src: 'https://static.cloudflareinsights.com/beacon.min.js',
+          type: 'module',
+          'data-cf-beacon': '{"token": "32a0c91724bd4868973306303744f0dd"}',
+        },
+      ],
     },
   },
   css: ['~/assets/main.css'],
