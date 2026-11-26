@@ -68,7 +68,6 @@ export const albums: Album[] = [
       { src: '/albums/people/candlelit-booth', alt: 'A friend in a white puff-sleeve dress resting her chin on her hand in a dark booth, beside a candle and a cocktail.' },
       { src: '/albums/people/lecture-hall', alt: 'Video: a friend pulling on a jacket in a lecture hall.', video: true },
       { src: '/albums/people/bike-ride', alt: 'A selfie in a bike helmet, with two friends on bicycles behind.' },
-      { src: '/albums/people/shades', alt: 'A friend in wraparound sunglasses and a floral shirt at a crowded party.' },
       { src: '/albums/people/cafe-corner', alt: 'A friend leaning against a rough plaster wall in a dim, lamp-lit restaurant.' },
       { src: '/albums/people/dinner-table', alt: 'A friend waving and smiling across a restaurant table set with shared plates.' },
       { src: '/albums/people/red-room', alt: 'A friend laughing and gesturing with a marker in hand, sitting against a bright red wall beneath a TV screen.' },
